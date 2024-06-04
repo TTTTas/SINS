@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\File">
+      <UniqueIdentifier>{e4f9a3c4-d06f-4ce4-a400-b71cacd37f8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\data">
+      <UniqueIdentifier>{95db0b5b-d267-452b-b4d2-8697b5c7819e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\File">
+      <UniqueIdentifier>{ab98b8d4-c6de-4ec3-8dd8-07dce9ff0423}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\data">
+      <UniqueIdentifier>{7e4b7005-1f46-4b04-bd2e-7754a569395a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Comm">
+      <UniqueIdentifier>{d4a4e0c4-8f40-4010-ab6b-345c56c565f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Comm">
+      <UniqueIdentifier>{96178e3d-16ff-4f46-81d4-11a55e428825}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SINS.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="file_load.cpp">
+      <Filter>源文件\File</Filter>
+    </ClCompile>
+    <ClCompile Include="Ins_data.cpp">
+      <Filter>源文件\data</Filter>
+    </ClCompile>
+    <ClCompile Include="Comm.cpp">
+      <Filter>源文件\Comm</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="file_load.h">
+      <Filter>头文件\File</Filter>
+    </ClInclude>
+    <ClInclude Include="Ins_data.h">
+      <Filter>头文件\data</Filter>
+    </ClInclude>
+    <ClInclude Include="imu_data.h">
+      <Filter>头文件\data</Filter>
+    </ClInclude>
+    <ClInclude Include="comm.h">
+      <Filter>头文件\Comm</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="IMU_data.ASC">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
+</Project>
