@@ -49,8 +49,8 @@ int read_imu_asc(INS_Eigen& ins)
     progressbar bar(totalSize);
     bar.set_todo_char(" ");
     bar.set_done_char("█");
-    bar.set_opening_bracket_char("{");
-    bar.set_closing_bracket_char("}");
+    bar.set_opening_bracket_char("[");
+    bar.set_closing_bracket_char("]");
     std::streamsize bytesRead = 0;
 
     std::printf("读取文件:\n");
@@ -75,5 +75,36 @@ int read_imu_asc(INS_Eigen& ins)
         }
 
     }
+    return val;
+}
+
+int read_OBS_Rnx(OBS_DATA* obs, const char* path)
+{
+    std::ifstream inputFile(path);
+    std::string line;
+    int val = 0;
+    if (!inputFile) {
+        std::cerr << "无法打开文件!" << std::endl;
+        return 1;
+    }
+
+    // 获取文件总大小（字节）
+    inputFile.seekg(0, std::ios::end);
+    std::streamsize totalSize = inputFile.tellg();
+    inputFile.seekg(0, std::ios::beg);
+
+    // 初始化进度条
+    progressbar bar(totalSize);
+    bar.set_todo_char(" ");
+    bar.set_done_char("█");
+    bar.set_opening_bracket_char("[");
+    bar.set_closing_bracket_char("]");
+    std::streamsize bytesRead = 0;
+
+    std::printf("读取文件:\n");
+    std::streamsize bytes_last = 0;
+
+
+
     return val;
 }

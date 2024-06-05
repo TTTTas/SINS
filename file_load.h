@@ -16,4 +16,8 @@ int read_imu_asc(INS_Eigen& ins);
 
 int read_OBS_Rnx(OBS_DATA* obs);
 
-int read_EPHEMERIS_Rnx(EPHEMERIS* gps_eph, EPHEMERIS* bds_eph);
+int read_Line_Sate(Satellate* sate);
+
+int read_EPHEMERIS_Rnx(EPHEMERIS** gps_eph, EPHEMERIS** bds_eph);
+
+int read_EPHEMERIS_One(EPHEMERIS* eph);

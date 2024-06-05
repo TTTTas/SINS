@@ -146,11 +146,13 @@ double CODE2FREQ(int code)
 	case 1:
 		return Freq_L1;
 	case 2:
+		return Freq_L2;
 	case 3:
 		return Freq_L2;
 	case 4:
 		return Freq_L5;
 	case 5:
+		return Freq_L1;
 	case 6:
 		return Freq_L1;
 	case 7:
