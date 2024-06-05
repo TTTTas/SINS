@@ -92,31 +92,31 @@ double Hopefield(XYZ SatPos, XYZ RcvPos, int sys);
 double Klobuchar(XYZ RcvPos, double E, double A, double alpha[4], double beta[4], double UT, double code, int sys);
 
 /*网口下位置解算*/
-unsigned int LS_SPV(DATA_SET* data, Configure cfg);
+unsigned int LS_SPV(DATA_SET* data, GNSS_Configure cfg);
 
-unsigned int setup_LS(DATA_SET* data, Configure cfg, int sys);
+unsigned int setup_LS(DATA_SET* data, GNSS_Configure cfg, int sys);
 
-unsigned int setup_KF(DATA_SET* data, Configure cfg, int sys);
+unsigned int setup_KF(DATA_SET* data, GNSS_Configure cfg, int sys);
 
-double get_measure(Satellate* sate, Configure cfg, EPHEMERIS* eph, double &p);
+double get_measure(Satellate* sate, GNSS_Configure cfg, EPHEMERIS* eph, double &p);
 
 double P_height1(double ELEV);
 
 double P_height2(double ELEV);
 
 // SPP单点定位KF
-unsigned int KF_SPV(DATA_SET* data, double dt_e, Configure cfg);
+unsigned int KF_SPV(DATA_SET* data, double dt_e, GNSS_Configure cfg);
 
-unsigned int Select_Common_Sates(DATA_SET* rove, DATA_SET* base, RTK_DATA* rtk, Configure cfg);
+unsigned int Select_Common_Sates(DATA_SET* rove, DATA_SET* base, RTK_DATA* rtk, GNSS_Configure cfg);
 
-int get_mat(MatrixXd& B, MatrixXd& L, MatrixXd& Q, GPSTIME* time, XYZ* RcvPos, vector<Satellate*>sates, int sys, Configure cfg, RTK_DATA* rtk, vector<int>& PRN_used);
+int get_mat(MatrixXd& B, MatrixXd& L, MatrixXd& Q, GPSTIME* time, XYZ* RcvPos, vector<Satellate*>sates, int sys, GNSS_Configure cfg, RTK_DATA* rtk, vector<int>& PRN_used);
 
 void RemoveRow(Eigen::MatrixXd& matrix, unsigned int rowToRemove);
 
 void RemoveColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove);
 
-unsigned int RTK_Set(DATA_SET* base, RTK_DATA* rtk, Configure cfg, int sys, int method);
+unsigned int RTK_Set(DATA_SET* base, RTK_DATA* rtk, GNSS_Configure cfg, int sys, int method);
 
-unsigned int RTK_Solve(DATA_SET* base, RTK_DATA* rtk, Configure cfg);
+unsigned int RTK_Solve(DATA_SET* base, RTK_DATA* rtk, GNSS_Configure cfg);
 
-MatrixXd Cal_V(RTK_DATA* rtk, Configure cfg, XYZ* rove_pos);
+MatrixXd Cal_V(RTK_DATA* rtk, GNSS_Configure cfg, XYZ* rove_pos);

@@ -1,7 +1,9 @@
 #include"Configure.h"
 #include<iostream>
 
-Configure::Configure()
+#include "comm.h"
+
+GNSS_Configure::GNSS_Configure()
 {
 	Load_cfg();
 	int count = 0;
@@ -15,7 +17,7 @@ Configure::Configure()
 		<< std::endl;
 }
 
-void Configure::Load_cfg()
+void GNSS_Configure::Load_cfg()
 {
 	NetIP_1 = "8.140.46.126";
 	NetPort_1 = 4002;
@@ -68,4 +70,73 @@ Sate_Configure::Sate_Configure()
 	used = false;
 	f1 = 0;
 	f2 = 0;
+}
+
+INS_Configure::INS_Configure()
+{
+	Imu_path = "IMU_data.ASC";
+	GNSS_path = "GNSS_data.pos";
+	ODO_path = "ODO.bin";
+	Out_Folder="D:\\INS\\result\\";
+
+	use_GNSS_vel = false;
+	use_ODONHC = false;
+	use_ZUPT = false;
+	odo_update_rate = 0.5;
+	zupt_update_rate = 0.5;
+	use_GNSS_file = true;
+
+	Init_time = 5 * 60;
+	init_pos = XYZ(deg2rad(30.53009), deg2rad(114.35609), 26.704);
+	init_vel = XYZ(0.0, 0.0, 0.0);
+	init_att = XYZ(0.0, 0.0, 0.0);
+
+	init_pos_std = XYZ(0.05, 0.05, 0.1);
+	init_vel_std = XYZ(0.05, 0.05, 0.05);
+	init_att_std = XYZ(0.1, 0.1, 0.5);
+
+	init_gyr_bias = XYZ(-3700, 3400, 1000);
+	init_acc_bias = XYZ(-10000, 3500, -6700);
+	init_gyr_scale = XYZ(10000, 1700, -500);
+	init_acc_scale = XYZ(0, 2000, 0);
+	init_gyr_bias_std = XYZ(50, 50, 50);
+	init_acc_bias_std = XYZ(250, 250, 250);
+	init_gyr_scale_std = XYZ(1000, 1000, 1000);
+	init_acc_scale_std = XYZ(1000, 1000, 1000);
+
+	gyr_ARW = 0.24;
+	acc_VRW = 0.24;
+	gyr_bias_std = 50;
+	acc_bias_std = 250;
+	gyr_scale_std = 1000;
+	acc_scale_std = 1000;
+	corr_time = 1;
+
+	ant_lever = XYZ(0.045, 0.46,-0.238);
+	odo_lever = XYZ(-0.522, -0.47, 1.797);
+	install_angle = XYZ(0, -0.2, 1.2);
+
+	ODONHC_mean_noise = XYZ(0.1, 0.1, 0.1);
+
+	init_att *= DEG2RAD;
+	init_att_std *= DEG2RAD;
+
+	init_gyr_bias *= DEG2RAD / 3600;
+	init_acc_bias *= 1e-5;
+	init_gyr_scale *= 1e-6;
+	init_acc_scale *= 1e-6;
+	init_gyr_bias_std *= DEG2RAD / 3600;
+	init_acc_bias_std *= 1e-5;
+	init_gyr_scale_std *= 1e-6;
+	init_acc_scale_std *= 1e-6;
+
+	gyr_ARW *= DEG2RAD / 60;
+	acc_VRW /= 60;
+	gyr_bias_std *= DEG2RAD / 3600;
+	acc_bias_std *= 1e-5;
+	gyr_scale_std *= 1e-6;
+	acc_scale_std *= 1e-6;
+	corr_time *= 3600;
+
+	install_angle *= DEG2RAD;
 }

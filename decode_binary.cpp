@@ -289,7 +289,7 @@ int decodestream(DATA_SET* result, unsigned char Buff[], int& d)
 	return val;
 }
 
-int decodefile(DATA_SET* result, Configure cfg, const char* path)
+int decodefile(DATA_SET* result, GNSS_Configure cfg, const char* path)
 {
 	unsigned char data, buff[MAXRAWLEN];
 	FILE* FObs;
@@ -429,7 +429,7 @@ int decodefile(DATA_SET* result, Configure cfg, const char* path)
 	return 1;
 }
 
-int decodeRTKfile(DATA_SET* result, Configure cfg, const char* path1, const char* path2)
+int decodeRTKfile(DATA_SET* result, GNSS_Configure cfg, const char* path1, const char* path2)
 {
 	unsigned char data1, buff1[MAXRAWLEN], data2, buff2[MAXRAWLEN];
 	FILE* FObs1;

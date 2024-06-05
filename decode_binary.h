@@ -94,4 +94,4 @@ unsigned int decode_BDSEPH_STAT(unsigned char *buff, EPHEMERIS *bdse);
 /*½âÂë*/
 int decodestream(DATA_SET* result, unsigned char Buff[], int& d);
 
-int decodefile(DATA_SET* result, Configure cfg, const char* path);
+int decodefile(DATA_SET* result, GNSS_Configure cfg, const char* path);

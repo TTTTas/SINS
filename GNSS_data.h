@@ -170,18 +170,18 @@ public:
 	/*KalmanFilter*/
 	KalmanFilter* KF;
 
-	DATA_SET(Configure cfg);
+	DATA_SET(GNSS_Configure cfg);
 
 	static void inital_eph();
 
 	void reset();
 
-	int LS_print(Configure cfg);				// 控制台输出
-	int LS_Filewrite(FILE* fpr, Configure cfg); // 文件输出
-	void KF_Print(FILE* fpr, Configure cfg);
+	int LS_print(GNSS_Configure cfg);				// 控制台输出
+	int LS_Filewrite(FILE* fpr, GNSS_Configure cfg); // 文件输出
+	void KF_Print(FILE* fpr, GNSS_Configure cfg);
 
-	int Set_KF(Configure cfg);
-	int Set_LS(Configure cfg);
+	int Set_KF(GNSS_Configure cfg);
+	int Set_LS(GNSS_Configure cfg);
 
 	/*一致性检验*/
 	int CheckOBSConsist(Satellate* sate, int sys, double t, int index, bool& PSE_flag, bool& PHA_flag);
@@ -189,9 +189,9 @@ public:
 	/*粗差探测*/
 	int DetectOutlier(Satellate* sate, int sys, double t, int index1, int index2);
 
-	void DetectOut(Configure cfg, double dt_e);
+	void DetectOut(GNSS_Configure cfg, double dt_e);
 
-	void Sate_pos_pre(double t, Configure cfg);
+	void Sate_pos_pre(double t, GNSS_Configure cfg);
 
 };
 
@@ -238,10 +238,10 @@ public:
 	Least_Squares* LS;
 	KalmanFilter* KF;
 
-	RTK_DATA(Configure cfg);
+	RTK_DATA(GNSS_Configure cfg);
 	void reset();
-	void LS_Output(FILE* fpr, Configure cfg);
-	void KF_Output(FILE* fpr, Configure cfg);
+	void LS_Output(FILE* fpr, GNSS_Configure cfg);
+	void KF_Output(FILE* fpr, GNSS_Configure cfg);
 };
 
 /*创建文件夹*/

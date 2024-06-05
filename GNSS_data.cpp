@@ -18,7 +18,7 @@ void DATA_SET::inital_eph()
 	}
 }
 
-DATA_SET::DATA_SET(Configure cfg)
+DATA_SET::DATA_SET(GNSS_Configure cfg)
 {
 	OBSTIME = new GPSTIME();
 
@@ -75,7 +75,7 @@ DATA_SET::DATA_SET(Configure cfg)
 	Real_Pos = new XYZ(-2267807.853, 5009320.431, 3221020.875);
 }
 
-void DATA_SET::Sate_pos_pre(double t, Configure cfg)
+void DATA_SET::Sate_pos_pre(double t, GNSS_Configure cfg)
 {
 	for(Satellate* sate:range->GPS_SATE)
 	{
@@ -174,7 +174,7 @@ void DATA_SET::reset()
 	}
 }
 
-int DATA_SET::LS_print(Configure cfg)
+int DATA_SET::LS_print(GNSS_Configure cfg)
 {
 	XYZ xyz = get_XYZ(Pos);
 	double dt_G = 0;
@@ -238,7 +238,7 @@ int DATA_SET::LS_print(Configure cfg)
 	return 0;
 }
 
-int DATA_SET::LS_Filewrite(FILE* fpr, Configure cfg)
+int DATA_SET::LS_Filewrite(FILE* fpr, GNSS_Configure cfg)
 {
 	XYZ xyz = get_XYZ(Pos);
 	double dt_G = 0;
@@ -303,7 +303,7 @@ int DATA_SET::LS_Filewrite(FILE* fpr, Configure cfg)
 	return 0;
 }
 
-void DATA_SET::KF_Print(FILE* fpr, Configure cfg)
+void DATA_SET::KF_Print(FILE* fpr, GNSS_Configure cfg)
 {
 	XYZ xyz = get_XYZ(KF->getState().block(0, 0, 3, 1));
 	BLH blh = XYZ2BLH(xyz, WGS84_e2, WGS84_a);
@@ -551,7 +551,7 @@ int DATA_SET::DetectOutlier(Satellate* sate, int sys, double t, int index1, int 
 	}
 }
 
-void DATA_SET::DetectOut(Configure cfg, double dt_e)
+void DATA_SET::DetectOut(GNSS_Configure cfg, double dt_e)
 {
 	for (int i = 0; i < range->GPS_SATE.size(); i++)
 	{
@@ -597,7 +597,7 @@ void DATA_SET::DetectOut(Configure cfg, double dt_e)
 	}
 }
 
-RTK_DATA::RTK_DATA(Configure cfg)
+RTK_DATA::RTK_DATA(GNSS_Configure cfg)
 {
 	OBSTIME = new GPSTIME();
 	LS_SATES = new string();
@@ -656,7 +656,7 @@ void RTK_DATA::reset()
 	KF_IS_FIXED = false;
 }
 
-void RTK_DATA::LS_Output(FILE* fpr, Configure cfg)
+void RTK_DATA::LS_Output(FILE* fpr, GNSS_Configure cfg)
 {
 	XYZ base_line = *Rove_appro_pos - *Base_appro_pos;
 	BLH blh = XYZ2BLH(*Rove_appro_pos, WGS84_e2, WGS84_a);
@@ -755,7 +755,7 @@ void RTK_DATA::LS_Output(FILE* fpr, Configure cfg)
 	fprintf(fpr, "------------------------------------End of Epoch------------------------------------\n");
 }
 
-void RTK_DATA::KF_Output(FILE* fpr, Configure cfg)
+void RTK_DATA::KF_Output(FILE* fpr, GNSS_Configure cfg)
 {
 	XYZ rove_pos = *KF_pos;
 	XYZ base_line = rove_pos - *Base_appro_pos;

@@ -17,7 +17,7 @@ public:
 	double sigma;
 
 	Least_Squares();
-	Least_Squares(Configure cfg);
+	Least_Squares(GNSS_Configure cfg);
 	void LS();
 	void ELS();
 	int set_B_Pos(MatrixXd B_);

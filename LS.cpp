@@ -7,7 +7,7 @@ Least_Squares::Least_Squares()
 	X = MatrixXd::Zero(4, 1);
 }
 
-Least_Squares::Least_Squares(Configure cfg)
+Least_Squares::Least_Squares(GNSS_Configure cfg)
 {
 	if (cfg.SYS_num == 1)
 		X = MatrixXd::Zero(4, 1);

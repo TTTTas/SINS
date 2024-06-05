@@ -525,7 +525,7 @@ double Klobuchar(XYZ RcvPos, double E, double A, double alpha[4], double beta[4]
 //   - sys: 卫星系统类型 (SYS_GPS 或 SYS_BDS)
 // 返回值: LS定位矩阵行数
 
-unsigned int setup_LS(DATA_SET* data, Configure cfg, int sys)
+unsigned int setup_LS(DATA_SET* data, GNSS_Configure cfg, int sys)
 {
 	// 声明变量
 	int ROWS = 0;
@@ -716,7 +716,7 @@ unsigned int setup_LS(DATA_SET* data, Configure cfg, int sys)
 //   - sys: 卫星系统类型 (SYS_GPS 或 SYS_BDS)
 // 返回值: KF定位矩阵行数
 
-unsigned int setup_KF(DATA_SET* data, Configure cfg, int sys)
+unsigned int setup_KF(DATA_SET* data, GNSS_Configure cfg, int sys)
 {
 	// 声明变量
 	int ROWS = 0;
@@ -889,7 +889,7 @@ unsigned int setup_KF(DATA_SET* data, Configure cfg, int sys)
 //   - p: 权重
 // 返回值: 测量值
 
-double get_measure(Satellate* Sate, Configure cfg, EPHEMERIS* eph, double& p)
+double get_measure(Satellate* Sate, GNSS_Configure cfg, EPHEMERIS* eph, double& p)
 {
 	// 声明变量
 	double measure = 0;
@@ -990,7 +990,7 @@ double P_height2(double ELEV)
 //   - data: 数据集，包含卡尔曼滤波器、最小二乘解等数据
 //   - cfg: 配置信息，包括系统编号和传感器配置
 // 返回值: 操作结果，成功返回0，否则返回非零值
-unsigned int LS_SPV(DATA_SET* data, Configure cfg)
+unsigned int LS_SPV(DATA_SET* data, GNSS_Configure cfg)
 {
 	int val = 0;
 
@@ -1028,7 +1028,7 @@ unsigned int LS_SPV(DATA_SET* data, Configure cfg)
 // 输入参数:
 //   - cfg: 配置信息，包括系统数和传感器配置
 // 返回值: 最小二乘问题的行数
-int DATA_SET::Set_LS(Configure cfg)
+int DATA_SET::Set_LS(GNSS_Configure cfg)
 {
 	// 将最小二乘解的前三行赋值给临时参考数据
 	temp_ref.topRows(3) = Pos;
@@ -1079,7 +1079,7 @@ int DATA_SET::Set_LS(Configure cfg)
 //   - dt_e: 时间步长
 //   - cfg: 配置信息，包括系统编号和传感器配置
 // 返回值: 操作结果，成功返回0，否则返回非零值
-unsigned int KF_SPV(DATA_SET* data, double dt_e, Configure cfg)
+unsigned int KF_SPV(DATA_SET* data, double dt_e, GNSS_Configure cfg)
 {
 	int val = 0;
 
@@ -1137,7 +1137,7 @@ unsigned int KF_SPV(DATA_SET* data, double dt_e, Configure cfg)
 // 输入参数:
 //   - cfg: 配置信息，包括系统编号和传感器配置
 // 返回值: 操作结果，成功返回0，否则返回非零值
-int DATA_SET::Set_KF(Configure cfg)
+int DATA_SET::Set_KF(GNSS_Configure cfg)
 {
 	int val = 0;
 	temp_ref.topRows(3) = KF->getState_minus().block(0, 0, 3, 1);
@@ -1210,7 +1210,7 @@ void processString(std::string* str, int* gps, int* bds)
 }
 
 
-unsigned int Select_Common_Sates(DATA_SET* rove, DATA_SET* base, RTK_DATA* rtk, Configure cfg)
+unsigned int Select_Common_Sates(DATA_SET* rove, DATA_SET* base, RTK_DATA* rtk, GNSS_Configure cfg)
 {
 	int Rove_GPS[GPS_SAT_QUAN];
 	int Rove_BDS[BDS_SAT_QUAN];
@@ -1300,7 +1300,7 @@ unsigned int Select_Common_Sates(DATA_SET* rove, DATA_SET* base, RTK_DATA* rtk, 
 }
 
 int get_mat(MatrixXd& B, MatrixXd& L, MatrixXd& Q, GPSTIME* time, XYZ* RcvPos, vector<Satellate*> sates,
-            int sys, Configure cfg, RTK_DATA* rtk, vector<int>& PRN_used)
+            int sys, GNSS_Configure cfg, RTK_DATA* rtk, vector<int>& PRN_used)
 {
 	MatrixXd B_new = MatrixXd::Zero(1, 3);
 	MatrixXd l_new = MatrixXd::Zero(1, 1);
@@ -1466,7 +1466,7 @@ void RemoveColumn(Eigen::MatrixXd& matrix, unsigned int colToRemove)
 }
 
 
-unsigned int RTK_Set(DATA_SET* base, RTK_DATA* rtk, Configure cfg, int sys, int method)
+unsigned int RTK_Set(DATA_SET* base, RTK_DATA* rtk, GNSS_Configure cfg, int sys, int method)
 {
 	int ROWS = 0;
 	vector<Satellate*> Rove_Sates;
@@ -1689,7 +1689,7 @@ unsigned int RTK_Set(DATA_SET* base, RTK_DATA* rtk, Configure cfg, int sys, int 
 	return 1;
 }
 
-unsigned int RTK_Solve(DATA_SET* base, RTK_DATA* rtk, Configure cfg)
+unsigned int RTK_Solve(DATA_SET* base, RTK_DATA* rtk, GNSS_Configure cfg)
 {
 	if (cfg.RTK_LS_used)
 	{

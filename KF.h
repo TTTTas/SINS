@@ -39,11 +39,11 @@ public:
     MatrixXd z_ ; //π€≤‚÷µ
 };
 
-MatrixXd getA(double T, Configure cfg);
+MatrixXd getA(double T, GNSS_Configure cfg);
 
 MatrixXd getH(MatrixXd B);
 
-MatrixXd getQ(double T, Configure cfg);
+MatrixXd getQ(double T, GNSS_Configure cfg);
 
 MatrixXd getR(double ROW);
 

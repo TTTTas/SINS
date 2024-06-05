@@ -11,6 +11,7 @@
 #define Freq_B2 1207.14
 #define Freq_B2_a 1176.45
 #define Freq_B3 1268.52
+#include "transform.h"
 
 class Sate_Configure
 {
@@ -25,7 +26,7 @@ public:
 };
 
 /*网口和存储结构相关配置*/
-class Configure
+class GNSS_Configure
 {
 public:
 	const char* NetIP_1;			 // IP
@@ -65,6 +66,59 @@ public:
 	double initial_covariance;
 	double process_noise_pos;
 	double process_noise_abg;
-	Configure();
+	GNSS_Configure();
 	void Load_cfg();
+};
+
+class INS_Configure
+{
+public:
+	// 文件路径
+	const char* Imu_path;
+	const char* GNSS_path;
+	const char* ODO_path;
+	const char* Out_Folder;
+	// 解算配置
+	bool use_GNSS_vel;
+	bool use_ZUPT;
+	bool use_ODONHC;
+	bool use_GNSS_file;
+	double odo_update_rate;
+	double zupt_update_rate;
+	// 初始化信息
+	int Init_time;
+
+	XYZ init_pos;			//deg deg m 
+	XYZ init_vel;			//m/s
+	XYZ init_att;			//deg
+
+	XYZ init_pos_std;		//m
+	XYZ init_vel_std;		//m/s
+	XYZ init_att_std;		//deg
+
+	XYZ init_gyr_bias;		//deg/h
+	XYZ init_acc_bias;		//mGal;
+	XYZ init_gyr_scale;		//ppm
+	XYZ init_acc_scale;		//ppm
+
+	XYZ init_gyr_bias_std;	//deg/h
+	XYZ init_acc_bias_std;	//mGal;
+	XYZ init_gyr_scale_std;	//ppm
+	XYZ init_acc_scale_std;	//ppm
+
+	double gyr_ARW;			//deg/s/sqrt(h)
+	double acc_VRW;			//m/s/sqrt(h)
+	double gyr_bias_std;	//deg/h
+	double acc_bias_std;	//mGal
+	double gyr_scale_std;	//ppm
+	double acc_scale_std;	//ppm
+	double corr_time;		//h
+	// 安装参数
+	XYZ ant_lever;			//m
+	XYZ odo_lever;			//m
+	XYZ install_angle;		//deg
+	// 噪声
+	XYZ ODONHC_mean_noise;	//m/s
+
+	INS_Configure();
 };

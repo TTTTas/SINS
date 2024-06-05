@@ -113,6 +113,16 @@ typedef struct XYZ
 	XYZ operator/(const double a) const {
 		return XYZ(X / a, Y / a, Z / a);
 	}
+	XYZ operator*(const double a)const
+	{
+		return XYZ(X * a, Y * a, Z * a);
+	}
+	XYZ operator*=(const double a)
+	{
+		X *= a;
+		Y *= a;
+		Z *= a;
+	}
 
 };
 /*大地坐标系*/

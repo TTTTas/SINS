@@ -170,7 +170,7 @@ MatrixXd KalmanFilter::getState_minus()
 	return x_hat_minus_;
 }
 
-MatrixXd getA(double T, Configure cfg)
+MatrixXd getA(double T, GNSS_Configure cfg)
 {
 	int row = cfg.SYS_num + 7;
 	MatrixXd A = MatrixXd::Identity(row, row);
@@ -195,7 +195,7 @@ MatrixXd getH(MatrixXd B)
 	return H;
 }
 
-MatrixXd getQ(double T, Configure cfg)
+MatrixXd getQ(double T, GNSS_Configure cfg)
 {
 	MatrixXd Sv = MatrixXd::Identity(3, 3) * 0.05;
 	double St = 0.05;
@@ -268,7 +268,7 @@ int RTK_getA(vector<int> old_prn, map<int, int>& new_prn, MatrixXd& A, int new_r
 }
 
 
-MatrixXd Cal_V(RTK_DATA* rtk, Configure cfg, XYZ* rove_pos)
+MatrixXd Cal_V(RTK_DATA* rtk, GNSS_Configure cfg, XYZ* rove_pos)
 {
 	MatrixXd V = MatrixXd::Zero(0, 1);
 	int ROWS = 0;
