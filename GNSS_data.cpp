@@ -3,6 +3,8 @@
 #include <io.h>
 #include <direct.h>
 
+#include "comm.h"
+
 EPHEMERIS* DATA_SET::GPS_eph[GPS_SAT_QUAN];
 EPHEMERIS* DATA_SET::BDS_eph[BDS_SAT_QUAN];
 
@@ -193,7 +195,7 @@ int DATA_SET::LS_print(GNSS_Configure cfg)
 	}
 	BLH blh = XYZ2BLH(xyz, WGS84_e2, WGS84_a);
 	XYZ enu = XYZ2ENU(*Real_Pos, xyz, SYS_GPS);
-	MatrixXd R = get_Rot(degree2rad(blh.Lat), degree2rad(blh.Lon));
+	MatrixXd R = get_Rot(deg2rad(blh.Lat), deg2rad(blh.Lon));
 	MatrixXd Q_local;
 	double m_H, m_V;
 	switch (LS_result)
@@ -257,7 +259,7 @@ int DATA_SET::LS_Filewrite(FILE* fpr, GNSS_Configure cfg)
 	}
 	BLH blh = XYZ2BLH(xyz, WGS84_e2, WGS84_a);
 	XYZ enu = XYZ2ENU(*Real_Pos, xyz, SYS_GPS);
-	MatrixXd R = get_Rot(degree2rad(blh.Lat), degree2rad(blh.Lon));
+	MatrixXd R = get_Rot(deg2rad(blh.Lat), deg2rad(blh.Lon));
 	MatrixXd Q_local;
 	double m_H, m_V;
 	switch (LS_result)
@@ -664,7 +666,7 @@ void RTK_DATA::LS_Output(FILE* fpr, GNSS_Configure cfg)
 	MatrixXd Qxx = LS->Qxx.block(0, 0, 3, 3);
 	double Base_Len = Len(&base_line);
 	MatrixXd R = get_XYZ(base_line / Base_Len).transpose();
-	MatrixXd K = get_Rot(degree2rad(blh.Lat), degree2rad(blh.Lon));
+	MatrixXd K = get_Rot(deg2rad(blh.Lat), deg2rad(blh.Lon));
 	double Q_s = (R * Qxx * R.transpose())(0, 0);
 	MatrixXd Qnn = K * Qxx * K.transpose();
 	MatrixXd V = Cal_V(this, cfg, Rove_appro_pos);
@@ -764,7 +766,7 @@ void RTK_DATA::KF_Output(FILE* fpr, GNSS_Configure cfg)
 	MatrixXd Qxx = Q_baseLine;
 	double Base_Len = Len(&base_line);
 	MatrixXd R = get_XYZ(base_line / Base_Len).transpose();
-	MatrixXd K = get_Rot(degree2rad(blh.Lat), degree2rad(blh.Lon));
+	MatrixXd K = get_Rot(deg2rad(blh.Lat), deg2rad(blh.Lon));
 	double Q_s = (R * Qxx * R.transpose())(0, 0);
 	MatrixXd Qnn = K * Qxx * K.transpose();
 	MatrixXd V = Cal_V(this, cfg, KF_pos);

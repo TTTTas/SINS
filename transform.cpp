@@ -1,5 +1,6 @@
 #include"transform.h"
 #include"cal.h"
+#include "comm.h"
 
 MJD UTC2MJD(UTC utc)//常规时间转化至简化儒略日
 {
@@ -163,8 +164,8 @@ XYZ XYZ2ENU(XYZ xyz1, XYZ xyz2, int sys)
 	default:
 		break;
 	}
-	double B = degree2rad(blh.Lat);
-	double L = degree2rad(blh.Lon);
+	double B = deg2rad(blh.Lat);
+	double L = deg2rad(blh.Lon);
 	MatrixXd R = get_Rot(B, L);
 
 	MatrixXd x0(3, 1);

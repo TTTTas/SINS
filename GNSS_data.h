@@ -3,12 +3,14 @@
 #include "transform.h"
 #include "KF.h"
 #include "LS.h"
-#include "decode_binary.h"
 #include "Configure.h"
 #include <string>
 #include <vector>
 using namespace Eigen;
 using namespace std;
+
+#define MAXRAWLEN 40960		 // 最大读取数据长度
+#define MAXNUM 8			 // 波段数
 
 #define GPS_SAT_QUAN 32
 #define BDS_SAT_QUAN 63

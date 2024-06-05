@@ -11,8 +11,7 @@
 #include "GNSS_data.h"
 using namespace std;
 
-#define MAXRAWLEN 40960		 // 最大读取数据长度
-#define MAXNUM 8			 // 波段数
+
 #define POLYCRC32 0xEDB88320 // CRC32校验码参数
 #define OEM4SYNC1 0xAA		 /* oem7/6/4 message start sync code 1 */
 #define OEM4SYNC2 0x44		 /* oem7/6/4 message start sync code 2 */

@@ -117,11 +117,12 @@ typedef struct XYZ
 	{
 		return XYZ(X * a, Y * a, Z * a);
 	}
-	XYZ operator*=(const double a)
+	XYZ& operator*=(const double a)
 	{
 		X *= a;
 		Y *= a;
 		Z *= a;
+		return *this;
 	}
 
 };
