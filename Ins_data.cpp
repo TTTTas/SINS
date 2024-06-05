@@ -1,6 +1,10 @@
 #include "Ins_data.h"
 #include "comm.h"
 #include <fstream>
+#include "progressbar.hpp"
+
+#define _CRT_SECURE_NO_WARNINGS
+
 
 void INS_Eigen::Init_Yaw()
 {
@@ -24,31 +28,31 @@ void INS_Eigen::Init_Yaw()
     meanfy /= total_time;
     meanfz /= total_time;
 
-    Vector3d g_n(0, 0, gravity);
-    Vector3d v_g = g_n.normalized();
-    Vector3d omiga_n_ie(OMEGA_E * cos(Atti(0)),0,-OMEGA_E * sin(Atti(0)));
-    Vector3d v_omiga = (g_n.cross(omiga_n_ie)).normalized();
-    Vector3d v_gomiga = (g_n.cross(omiga_n_ie).cross(g_n)).normalized();
+    Eigen::Vector3d g_n(0, 0, gravity);
+    Eigen::Vector3d v_g = g_n.normalized();
+    Eigen::Vector3d omiga_n_ie(OMEGA_E * cos(Atti(0)),0,-OMEGA_E * sin(Atti(0)));
+    Eigen::Vector3d v_omiga = (g_n.cross(omiga_n_ie)).normalized();
+    Eigen::Vector3d v_gomiga = (g_n.cross(omiga_n_ie).cross(g_n)).normalized();
 
     // 计算omiga_b_ie
-    Vector3d omiga_b_ie(mean_x, mean_y, mean_z);
+    Eigen::Vector3d omiga_b_ie(mean_x, mean_y, mean_z);
 
     // 计算g_b
-    Vector3d g_b(meanfx, meanfy, meanfz);
+    Eigen::Vector3d g_b(meanfx, meanfy, meanfz);
     g_b = -g_b;
 
     // 计算omiga_g
-    Vector3d omiga_g = g_b.normalized();
+    Eigen::Vector3d omiga_g = g_b.normalized();
 
     // 计算omiga_omiga
-    Vector3d omiga_omiga = (g_b.cross(omiga_b_ie)).normalized();
+    Eigen::Vector3d omiga_omiga = (g_b.cross(omiga_b_ie)).normalized();
 
     // 计算omiga_gomiga
-    Vector3d omiga_gomiga = (g_b.cross(omiga_b_ie).cross(g_b)).normalized();
+    Eigen::Vector3d omiga_gomiga = (g_b.cross(omiga_b_ie).cross(g_b)).normalized();
 
     // 构建C_n_b矩阵
-    Matrix3d V;
-    Matrix3d O;
+    Eigen::Matrix3d V;
+    Eigen::Matrix3d O;
     V.col(0) = v_g;
     V.col(1) = v_omiga;
     V.col(2) = v_gomiga;
@@ -56,39 +60,49 @@ void INS_Eigen::Init_Yaw()
     O.row(1) = omiga_omiga.transpose();
     O.row(2) = omiga_gomiga.transpose();
 
-    Matrix3d C_n_b = V * O;
+    Eigen::Matrix3d C_n_b = V * O;
 
     // 计算俯仰角、横滚角和航向角
     Atti(0) = std::atan(-C_n_b(2, 0) / std::sqrt(C_n_b(2, 1) * C_n_b(2, 1) + C_n_b(2, 2) * C_n_b(2, 2)));
     Atti(1) = std::atan2(C_n_b(2, 1), C_n_b(2, 2));
     Atti(2) = std::atan2(C_n_b(1, 0), C_n_b(0, 0));
 
-    cout << rad2deg(Atti).transpose() << endl;
+
+    std::cout << std::endl << "初始姿态角:\n" << rad2deg(Atti).transpose() << std::endl;
 }
 
 void INS_Eigen::Pure_IMU()
 {
     // Prepare result containers
     int data_size = Imu.size();
-    Matrix3d E = Euler2C(Atti);
-    Matrix3d e = Matrix3d::Zero();
-    Vector3d v = Vector3d::Zero();
-    Vector3d pos = Vector3d::Zero();
-    Vector3d v_last_two = Vector3d::Zero();
-    Vector3d pos_last_two = Vector3d::Zero();
+    Eigen::Matrix3d E = Euler2C(Atti);
+    Eigen::Matrix3d e = Eigen::Matrix3d::Zero();
+    Eigen::Vector3d v = Eigen::Vector3d::Zero();
+    Eigen::Vector3d pos = Eigen::Vector3d::Zero();
+    Eigen::Vector3d v_last_two = Eigen::Vector3d::Zero();
+    Eigen::Vector3d pos_last_two = Eigen::Vector3d::Zero();
 
     double time_last = Imu[Samp_rate * Init_time]->time;
 
-    fstream sw;
+    FILE* BLH_Fobs;
     try
     {
-        sw.open(this->BLH_path);
+        if ((fopen_s(&BLH_Fobs,this->BLH_path.c_str(), "w")) != 0)printf("Failed to Open File!");
     }
-    catch (exception exception)
+    catch (std::exception exception)
     {
         printf("Failed to Open File!");
     }
 
+    // 初始化进度条
+    progressbar bar(data_size - Samp_rate * Init_time);
+    bar.set_todo_char(" ");
+    bar.set_done_char("█");
+    bar.set_opening_bracket_char("[");
+    bar.set_closing_bracket_char("]");
+    int last_epoch = Samp_rate * Init_time;
+
+    printf("惯导机械编排解算:\n");
     for (int i = Samp_rate * Init_time + 1; i < data_size; ++i) {
         Time = Imu[i]->time;
         double delt_t = Time - time_last;
@@ -105,8 +119,13 @@ void INS_Eigen::Pure_IMU()
         Vel = v;
         BLH = pos;
 
-        std::cout << Time << "\t" << BLH.transpose() << "\n";
-        sw << Time << "\t" << BLH.transpose() << "\n";
+        std::fprintf(BLH_Fobs, "%.4f\t%10.6f\t%10.6f\t%7.6f\n", Time, rad2deg(BLH(0)), rad2deg(BLH(1)), BLH(2));
+
+        if(i- last_epoch>0.005*(data_size- Samp_rate * Init_time))
+        {
+            last_epoch = i;
+            bar.update(i - Samp_rate * Init_time);
+        }
     }
     Atti = C2Euler(E);
 }

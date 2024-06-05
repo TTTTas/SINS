@@ -4,7 +4,7 @@
 #include "comm.h"
 #include "file_load.h"
 #include "Ins_data.h"
-using namespace std;
+
 
 int main()
 {

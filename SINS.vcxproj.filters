@@ -31,6 +31,12 @@
     <Filter Include="源文件\Comm">
       <UniqueIdentifier>{96178e3d-16ff-4f46-81d4-11a55e428825}</UniqueIdentifier>
     </Filter>
+    <Filter Include="头文件\GNSS">
+      <UniqueIdentifier>{a08e8c53-3e8e-4680-801c-228c452567b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\GNSS">
+      <UniqueIdentifier>{f72e5088-6fc9-453c-9597-b51bb468947a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SINS.cpp">
@@ -45,6 +51,33 @@
     <ClCompile Include="Comm.cpp">
       <Filter>源文件\Comm</Filter>
     </ClCompile>
+    <ClCompile Include="Configure.cpp">
+      <Filter>源文件\Comm</Filter>
+    </ClCompile>
+    <ClCompile Include="transform.cpp">
+      <Filter>源文件\Comm</Filter>
+    </ClCompile>
+    <ClCompile Include="decode_binary.cpp">
+      <Filter>源文件\File</Filter>
+    </ClCompile>
+    <ClCompile Include="GNSS_data.cpp">
+      <Filter>源文件\data</Filter>
+    </ClCompile>
+    <ClCompile Include="KF.cpp">
+      <Filter>源文件\Comm</Filter>
+    </ClCompile>
+    <ClCompile Include="LS.cpp">
+      <Filter>源文件\Comm</Filter>
+    </ClCompile>
+    <ClCompile Include="cal.cpp">
+      <Filter>源文件\GNSS</Filter>
+    </ClCompile>
+    <ClCompile Include="LAMBDA.cpp">
+      <Filter>源文件\GNSS</Filter>
+    </ClCompile>
+    <ClCompile Include="sockets.cpp">
+      <Filter>源文件\File</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="file_load.h">
@@ -58,6 +91,33 @@
     </ClInclude>
     <ClInclude Include="comm.h">
       <Filter>头文件\Comm</Filter>
+    </ClInclude>
+    <ClInclude Include="transform.h">
+      <Filter>头文件\Comm</Filter>
+    </ClInclude>
+    <ClInclude Include="Configure.h">
+      <Filter>头文件\Comm</Filter>
+    </ClInclude>
+    <ClInclude Include="decode_binary.h">
+      <Filter>头文件\File</Filter>
+    </ClInclude>
+    <ClInclude Include="GNSS_data.h">
+      <Filter>头文件\data</Filter>
+    </ClInclude>
+    <ClInclude Include="KF.h">
+      <Filter>头文件\Comm</Filter>
+    </ClInclude>
+    <ClInclude Include="LS.h">
+      <Filter>头文件\Comm</Filter>
+    </ClInclude>
+    <ClInclude Include="cal.h">
+      <Filter>头文件\GNSS</Filter>
+    </ClInclude>
+    <ClInclude Include="LAMBDA.h">
+      <Filter>头文件\GNSS</Filter>
+    </ClInclude>
+    <ClInclude Include="sockets.h">
+      <Filter>头文件\File</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
