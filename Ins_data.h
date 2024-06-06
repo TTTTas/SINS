@@ -47,5 +47,5 @@ public:
 
 	void Init_Yaw();
 
-	void Pure_IMU();
+	void INS_Mech();
 };

@@ -170,7 +170,7 @@ public:
 	Least_Squares* LS_Vel;
 
 	/*KalmanFilter*/
-	KalmanFilter* KF;
+	GNSS_KF* KF;
 
 	DATA_SET(GNSS_Configure cfg);
 
@@ -238,7 +238,7 @@ public:
 	int Stable_Num;
 
 	Least_Squares* LS;
-	KalmanFilter* KF;
+	GNSS_KF* KF;
 
 	RTK_DATA(GNSS_Configure cfg);
 	void reset();

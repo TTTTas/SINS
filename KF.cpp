@@ -2,7 +2,7 @@
 #include "cal.h"
 #include "GNSS_data.h"
 
-KalmanFilter::KalmanFilter(MatrixXd initial_state, MatrixXd initial_covariance)
+GNSS_KF::GNSS_KF(MatrixXd initial_state, MatrixXd initial_covariance)
 {
 	A_ = MatrixXd::Identity(initial_state.rows(), initial_state.rows());
 	H_ = MatrixXd::Zero(0, 0);
@@ -12,25 +12,25 @@ KalmanFilter::KalmanFilter(MatrixXd initial_state, MatrixXd initial_covariance)
 	P_ = initial_covariance;
 }
 
-void KalmanFilter::predict()
+void GNSS_KF::predict()
 {
 	x_hat_minus_ = A_ * x_hat_;
 	P_minus_ = A_ * P_ * A_.transpose() + Q_;
 }
 
-void KalmanFilter::update()
+void GNSS_KF::update()
 {
 	K_ = P_minus_ * H_.transpose() * (H_ * P_minus_ * H_.transpose() + R_).inverse();
 	x_hat_ = x_hat_minus_ + K_ * (z_);
 	P_ = (MatrixXd::Identity(x_hat_.rows(), x_hat_.rows()) - K_ * H_) * P_minus_;
 }
 
-void KalmanFilter::set_A(MatrixXd A)
+void GNSS_KF::set_A(MatrixXd A)
 {
 	A_ = A;
 }
 
-void KalmanFilter::set_H(MatrixXd H, int mode)
+void GNSS_KF::set_H(MatrixXd H, int mode)
 {
 	if(H_.rows()==0)
 		H_ = H;
@@ -82,7 +82,7 @@ void KalmanFilter::set_H(MatrixXd H, int mode)
 
 }
 
-void KalmanFilter::set_Z(MatrixXd z)
+void GNSS_KF::set_Z(MatrixXd z)
 {
 	if (z_.rows() == 0)
 		z_ = z;
@@ -93,12 +93,12 @@ void KalmanFilter::set_Z(MatrixXd z)
 	}
 }
 
-void KalmanFilter::set_Q(MatrixXd Q)
+void GNSS_KF::set_Q(MatrixXd Q)
 {
 	Q_ = Q;
 }
 
-void KalmanFilter::set_R(MatrixXd R, int mode)
+void GNSS_KF::set_R(MatrixXd R, int mode)
 {
 	if (R_.rows() == 0)
 		R_ = R;
@@ -148,24 +148,24 @@ void KalmanFilter::set_R(MatrixXd R, int mode)
 	}
 }
 
-void KalmanFilter::setState(MatrixXd state)
+void GNSS_KF::setState(MatrixXd state)
 {
 	x_hat_ = state;
 }
 
-void KalmanFilter::reset()
+void GNSS_KF::reset()
 {
 	H_ = MatrixXd::Zero(0, 0);
 	z_ = MatrixXd::Zero(0, 0);
 	R_ = MatrixXd::Zero(0, 0);
 }
 
-MatrixXd KalmanFilter::getState() const
+MatrixXd GNSS_KF::getState() const
 {
 	return x_hat_;
 }
 
-MatrixXd KalmanFilter::getState_minus()
+MatrixXd GNSS_KF::getState_minus()
 {
 	return x_hat_minus_;
 }

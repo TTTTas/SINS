@@ -71,7 +71,7 @@ void INS_Eigen::Init_Yaw()
     std::cout << std::endl << "³õÊ¼×ËÌ¬½Ç:\n" << rad2deg(Atti).transpose() << std::endl;
 }
 
-void INS_Eigen::Pure_IMU()
+void INS_Eigen::INS_Mech()
 {
     // Prepare result containers
     int data_size = Imu.size();

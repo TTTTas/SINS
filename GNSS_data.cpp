@@ -73,7 +73,7 @@ DATA_SET::DATA_SET(GNSS_Configure cfg)
 		P_(7, 7) = 0.05;
 		P_(8, 8) = 0.05;
 	}
-	KF = new KalmanFilter(MatrixXd::Zero(7 + cfg.SYS_num, 1), P_);
+	KF = new GNSS_KF(MatrixXd::Zero(7 + cfg.SYS_num, 1), P_);
 	Real_Pos = new XYZ(-2267807.853, 5009320.431, 3221020.875);
 }
 
@@ -641,7 +641,7 @@ RTK_DATA::RTK_DATA(GNSS_Configure cfg)
 	Stable_Num = 0;
 
 	LS = new Least_Squares();
-	KF = new KalmanFilter(MatrixXd::Zero(3, 1), MatrixXd::Identity(3, 3) * SQR(cfg.initial_covariance));
+	KF = new GNSS_KF(MatrixXd::Zero(3, 1), MatrixXd::Identity(3, 3) * SQR(cfg.initial_covariance));
 }
 
 void RTK_DATA::reset()

@@ -293,26 +293,29 @@ int read_OBS_Rnx(vector<OBS_DATA*>* obs, const char* path, XYZ* appro_pos)
         }
     }
 
+    inputFile.close();
     val = 1;
     return val;
 }
 
-int read_EPHEMERIS_One(EPHEMERIS* eph, ifstream& fpr)
+int read_EPHEMERIS_One(EPHEMERIS* eph, ifstream& fpr, int prn)
 {
     string line;
     //第一行
     getline(fpr, line);
-    eph->PRN = stoi(line.substr(1, 2));
     UTC time;
-    time.Year = stoi(line.substr(4, 4));
-    time.Month = stoi(line.substr(9, 2));
-    time.Day = stoi(line.substr(12, 2));
-    time.Hour = stoi(line.substr(15, 2));
-    time.Min = stoi(line.substr(18, 2));
-    time.Sec = stoi(line.substr(21, 2));
+    time.Year = stoi(line.substr(1, 4));
+    time.Month = stoi(line.substr(6, 2));
+    time.Day = stoi(line.substr(9, 2));
+    time.Hour = stoi(line.substr(12, 2));
+    time.Min = stoi(line.substr(15, 2));
+    time.Sec = stoi(line.substr(18, 2));
     GPSTIME gpst = MJD2GPSTIME(UTC2MJD(time));
+    if (eph->PRN != 0 && ((gpst.Week - eph->toe_wn) * 604800 + gpst.SecOfWeek - eph->toe_tow) < 0)
+        return 1;
     eph->toe_wn = gpst.Week;
     eph->toe_tow = gpst.SecOfWeek;
+    eph->PRN = prn;
     eph->a_f0 = stod(line.substr(23, 19));
     eph->a_f1 = stod(line.substr(42, 19));
     eph->a_f2 = stod(line.substr(61, 19));
@@ -361,7 +364,7 @@ int read_EPHEMERIS_One(EPHEMERIS* eph, ifstream& fpr)
 
 int read_EPHEMERIS_Rnx(EPHEMERIS** gps_eph, EPHEMERIS** bds_eph, const char* path)
 {
-    std::ifstream inputFile(path);
+    std::ifstream inputFile(path, ios::in || ios::binary);
     std::string line;
     int val = 0;
     if (!inputFile) {
@@ -390,20 +393,23 @@ int read_EPHEMERIS_Rnx(EPHEMERIS** gps_eph, EPHEMERIS** bds_eph, const char* pat
         std::getline(inputFile, line);
     } while (line.find("END OF HEADER") == string::npos);
 
-    char sys;
-    int prn;
+    char sys=0;
+    int prn=0;
     char ch1, ch2;
     while(inputFile.peek() != EOF)
     {
         inputFile.get(sys);
-        inputFile.get(ch1);
-        inputFile.get(ch2);
-        prn = (ch1-'0') * 10 + ch2-'0';
-        inputFile.seekg(-3, ios::cur);
+        inputFile.get(ch1); inputFile.get(ch2);
+        prn = (ch1 - '0') * 10 + ch2 - '0';
         switch (sys)
         {
-        case 'G':read_EPHEMERIS_One(gps_eph[prn], inputFile); break;
-        case 'C':read_EPHEMERIS_One(bds_eph[prn], inputFile); break;
+        case 'G':read_EPHEMERIS_One(gps_eph[prn], inputFile, prn); break;
+        case 'C':read_EPHEMERIS_One(bds_eph[prn], inputFile, prn); break;
+        case 'S':for (int i = 0; i < 4; i++)getline(inputFile, line); break;
+        case 'R':for (int i = 0; i < 4; i++)getline(inputFile, line); break;
+        case 'E':for (int i = 0; i < 8; i++)getline(inputFile, line); break;
+        case 'J':for (int i = 0; i < 8; i++)getline(inputFile, line); break;
+        case 'I':for (int i = 0; i < 8; i++)getline(inputFile, line); break;
         default:break;
         }
         // 更新已读取字节数

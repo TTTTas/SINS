@@ -23,4 +23,4 @@ int read_OBS_Rnx(vector<OBS_DATA*>* obs, const char* path, XYZ* appro_pos);
 
 int read_EPHEMERIS_Rnx(EPHEMERIS** gps_eph, EPHEMERIS** bds_eph, const char* path);
 
-int read_EPHEMERIS_One(EPHEMERIS* eph, FILE& fpr);
+int read_EPHEMERIS_One(EPHEMERIS* eph, FILE& fpr, int prn);
