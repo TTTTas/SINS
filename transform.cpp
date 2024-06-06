@@ -52,7 +52,7 @@ GPSTIME MJD2GPSTIME(MJD mjd)
 	int gpsw = int((mjd.Days + mjd.FracDay - 44244) / 7);
 	double gpss = double((mjd.Days + mjd.FracDay - 44244 - gpsw * 7)) * 86400.0;
 	gpst.Week = gpsw;
-	gpst.SecOfWeek = gpss;
+	gpst.SecOfWeek = gpss + 18;
 	return gpst;
 }
 
@@ -85,6 +85,7 @@ GPSTIME BDSTIME2GPSTIME(GPSTIME bdst)
 // 此处考虑到，GPS时转化到MJD，再由MJD转化到UTC容易因为浮点数而丢失秒的数据，故对算法进行优化，在秒数上只进行整数运算
 UTC GPSTIME2UTC(GPSTIME gpst)
 {
+	gpst.SecOfWeek -= 18;
 	MJD mjd = GPSTIME2MJD(gpst);
 	UTC u = MJD2UTC(mjd);
 	UTC utc;
