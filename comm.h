@@ -22,6 +22,9 @@ Eigen::Vector3d rad2deg(Eigen::Vector3d& radians);
 // 线性外推函数
 Eigen::Vector3d Extrapol(const Eigen::Vector3d& v0, const Eigen::Vector3d& v1);
 
+// 向量元素平方
+Eigen::Vector3d SQR_Mat(Eigen::Vector3d v);
+
 // Function to calculate the local gravity value
  double GRS80_g(const Eigen::Vector3d& pos);
 
@@ -32,7 +35,7 @@ Eigen::Vector3d Extrapol(const Eigen::Vector3d& v0, const Eigen::Vector3d& v1);
  double Cal_RN(double B);
 
 // Function to create a skew-symmetric matrix
-Eigen::Matrix3d Cross_vector(const Eigen::Vector3d& vector);
+Eigen::Matrix3d Skew(const Eigen::Vector3d& vector);
 
 // Function to convert rotation matrix to quaternion
 Eigen::Quaterniond C2q(const Eigen::Matrix3d& C);
@@ -58,23 +61,20 @@ Eigen::Matrix3d Euler2C(const Eigen::Vector3d& Euler);
 // Function to convert Euler angles to quaternion
 Eigen::Quaterniond Euler2q(const Eigen::Vector3d& Euler);
 
+/* n系(导航坐标系)到e系(地心地固坐标系)转换四元数 */
+Eigen::Quaterniond q_n2e(const Eigen::Vector3d& blh);
+
+/* 从n系到e系转换四元数得到纬度和经度 */
+Eigen::Vector3d q_n2e_2_blh(const Eigen::Quaterniond& qne, double height);
+
+/* n系相对位置转大地坐标相对位置 */
+Eigen::Matrix3d DRi(const Eigen::Vector3d& blh);
+
+/* 大地坐标相对位置转n系相对位置 */
+Eigen::Matrix3d DR(const Eigen::Vector3d& blh);
+
 // Function to update Euler angles to quaternion
 Eigen::Quaterniond Update_Euler_q(const Eigen::Vector3d& E, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& pos, const Eigen::Vector3d& v, double dt);
 
-// Function to update the position
-Eigen::Vector3d Update_pos(const Eigen::Vector3d& pos0, const Eigen::Vector3d& v0, const Eigen::Vector3d& v1, double dt);
-
-// Function to convert BLH to NE coordinates
+// Function to convert BLH to NE 
 std::vector<Eigen::Vector2d> BLH2NE(const std::vector<Eigen::Vector3d>& BLH, const Eigen::Vector3d& BLH0);
-
-// Function to update attitude matrix
-Eigen::Matrix3d Update_Euler_C(const Eigen::Matrix3d& E, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& pos, const Eigen::Vector3d& v, double dt);
-
-// Function to calculate gravity/Coriolis integral term
- Eigen::Vector3d Cal_deltv_g_cor(const Eigen::Vector3d g, const Eigen::Vector3d& omiga_ie, const Eigen::Vector3d& omiga_en, const Eigen::Vector3d& v0, double dt);
-
-// Function to calculate specific force integral term
- Eigen::Vector3d Cal_deltv_f(const Eigen::Vector3d& omiga_ie, const Eigen::Vector3d& omiga_en, const Eigen::Matrix3d& C, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& v0, const Eigen::Vector3d& v1, double dt);
-
-// Function to update velocity
-Eigen::Vector3d Update_velocity(const Eigen::Vector3d& v00, const Eigen::Vector3d& v0, const Eigen::Vector3d& pos, const Eigen::Vector3d& pos0, double dt, const Eigen::Vector3d& dv0, const Eigen::Vector3d& dv1, const Eigen::Matrix3d& C, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1);

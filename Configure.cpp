@@ -87,56 +87,48 @@ INS_Configure::INS_Configure()
 	use_GNSS_file = true;
 
 	Init_time = 5 * 60;
-	init_pos = XYZ(deg2rad(30.53009), deg2rad(114.35609), 26.704);
-	init_vel = XYZ(0.0, 0.0, 0.0);
-	init_att = XYZ(0.0, 0.0, 0.0);
+	Samp_rate = 100;
 
-	init_pos_std = XYZ(0.05, 0.05, 0.1);
-	init_vel_std = XYZ(0.05, 0.05, 0.05);
-	init_att_std = XYZ(0.1, 0.1, 0.5);
+	gins_options.initstate.pos << deg2rad(30.53009), deg2rad(114.35609), 26.704;
+	gins_options.initstate.vel << 0.0, 0.0, 0.0;
+	gins_options.initstate.euler << 0.0, 0.0, 0.0;
 
-	init_gyr_bias = XYZ(-3700, 3400, 1000);
-	init_acc_bias = XYZ(-10000, 3500, -6700);
-	init_gyr_scale = XYZ(10000, 1700, -500);
-	init_acc_scale = XYZ(0, 2000, 0);
-	init_gyr_bias_std = XYZ(50, 50, 50);
-	init_acc_bias_std = XYZ(250, 250, 250);
-	init_gyr_scale_std = XYZ(1000, 1000, 1000);
-	init_acc_scale_std = XYZ(1000, 1000, 1000);
+	gins_options.initstate_std.pos << 0.05, 0.05, 0.1;
+	gins_options.initstate_std.vel << 0.05, 0.05, 0.05;
+	gins_options.initstate_std.euler << 0.1, 0.1, 0.5;
 
-	gyr_ARW = 0.24;
-	acc_VRW = 0.24;
-	gyr_bias_std = 50;
-	acc_bias_std = 250;
-	gyr_scale_std = 1000;
-	acc_scale_std = 1000;
-	corr_time = 1;
+	gins_options.initstate.imuerror.gyrbias << -3700, 3400, 1000;
+	gins_options.initstate.imuerror.accbias << -10000, 3500, -6700;
+	gins_options.initstate.imuerror.gyrscale << 10000, 1700, -500;
+	gins_options.initstate.imuerror.accscale << 0, 2000, 0;
+	gins_options.imunoise.gyrbias_std << 50, 50, 50;
+	gins_options.imunoise.accbias_std << 250, 250, 250;
+	gins_options.imunoise.gyrscale_std << 1000, 1000, 1000;
+	gins_options.imunoise.accscale_std << 1000, 1000, 1000;
 
-	ant_lever = XYZ(0.045, 0.46,-0.238);
-	odo_lever = XYZ(-0.522, -0.47, 1.797);
-	install_angle = XYZ(0, -0.2, 1.2);
+	gins_options.imunoise.gyr_arw << 0.24, 0.24, 0.24;
+	gins_options.imunoise.acc_vrw << 0.24, 0.24, 0.24;
+	gins_options.imunoise.corr_time = 1;
 
-	ODONHC_mean_noise = XYZ(0.1, 0.1, 0.1);
+	gins_options.antlever << 0.045, 0.46,-0.238;
+	odo_lever << -0.522, -0.47, 1.797;
 
-	init_att *= DEG2RAD;
-	init_att_std *= DEG2RAD;
+	ODONHC_mean_noise << 0.1, 0.1, 0.1;
 
-	init_gyr_bias *= DEG2RAD / 3600;
-	init_acc_bias *= 1e-5;
-	init_gyr_scale *= 1e-6;
-	init_acc_scale *= 1e-6;
-	init_gyr_bias_std *= DEG2RAD / 3600;
-	init_acc_bias_std *= 1e-5;
-	init_gyr_scale_std *= 1e-6;
-	init_acc_scale_std *= 1e-6;
+	gins_options.initstate.euler *= DEG2RAD;
+	gins_options.initstate_std.euler *= DEG2RAD;
 
-	gyr_ARW *= DEG2RAD / 60;
-	acc_VRW /= 60;
-	gyr_bias_std *= DEG2RAD / 3600;
-	acc_bias_std *= 1e-5;
-	gyr_scale_std *= 1e-6;
-	acc_scale_std *= 1e-6;
-	corr_time *= 3600;
+	gins_options.initstate.imuerror.gyrbias *= DEG2RAD / 3600;
+	gins_options.initstate.imuerror.accbias *= 1e-5;
+	gins_options.initstate.imuerror.gyrscale *= 1e-6;
+	gins_options.initstate.imuerror.accscale *= 1e-6;
+	gins_options.imunoise.gyrbias_std *= DEG2RAD / 3600;
+	gins_options.imunoise.accbias_std *= 1e-5;
+	gins_options.imunoise.gyrscale_std *= 1e-6;
+	gins_options.imunoise.accscale_std *= 1e-6;
 
-	install_angle *= DEG2RAD;
+	gins_options.imunoise.gyr_arw *= DEG2RAD / 60;
+	gins_options.imunoise.acc_vrw /= 60;
+
+	gins_options.imunoise.corr_time *= 3600;
 }

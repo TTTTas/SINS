@@ -1,19 +1,17 @@
 #pragma once
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
 #include <vector>
-#include <iomanip>
-#include <unordered_map>
 
 #include "GNSS_data.h"
 #include "Ins_data.h"
+#include "INS_types.h"
 
-IMU_data* read_line_data(const std::string& line);
+#define ACC_SCALE 1.5258789063E-06
+#define GYR_SCALE 1.0850694444E-07
 
-int read_imu_asc(INS_Eigen& ins);
+IMU* read_line_data(const std::string& line);
+
+int read_imu_asc(vector<IMU*>& Imu, string path);
 
 bool isAllSpaces(const std::string& str);
 
@@ -22,5 +20,3 @@ Satellate* read_OBS_line(string line, vector<pair<string, int>> pairs, vector<st
 int read_OBS_Rnx(vector<OBS_DATA*>* obs, const char* path, XYZ* appro_pos);
 
 int read_EPHEMERIS_Rnx(EPHEMERIS** gps_eph, EPHEMERIS** bds_eph, const char* path);
-
-int read_EPHEMERIS_One(EPHEMERIS* eph, FILE& fpr, int prn);

@@ -2,7 +2,7 @@
 #include "cal.h"
 #include "GNSS_data.h"
 
-GNSS_KF::GNSS_KF(MatrixXd initial_state, MatrixXd initial_covariance)
+GNSS_KF::GNSS_KF(MatrixXd initial_state, MatrixXd initial_covariance): KalmanFilter(initial_state, initial_covariance)
 {
 	A_ = MatrixXd::Identity(initial_state.rows(), initial_state.rows());
 	H_ = MatrixXd::Zero(0, 0);
@@ -267,7 +267,6 @@ int RTK_getA(vector<int> old_prn, map<int, int>& new_prn, MatrixXd& A, int new_r
 	return val;
 }
 
-
 MatrixXd Cal_V(RTK_DATA* rtk, GNSS_Configure cfg, XYZ* rove_pos)
 {
 	MatrixXd V = MatrixXd::Zero(0, 1);
@@ -363,4 +362,74 @@ MatrixXd Cal_V(RTK_DATA* rtk, GNSS_Configure cfg, XYZ* rove_pos)
 		}
 	}
 	return V;
+}
+
+INS_KF::INS_KF(MatrixXd initial_state, MatrixXd initial_covariance): KalmanFilter(initial_state,initial_covariance)
+{
+	A_ = MatrixXd::Identity(initial_state.rows(), initial_state.rows());
+	H_ = MatrixXd::Zero(0, 0);
+	z_ = MatrixXd::Zero(0, 0);
+	R_ = MatrixXd::Zero(0, 0);
+	x_hat_ = initial_state;
+	P_ = initial_covariance;
+}
+
+void INS_KF::predict()
+{
+	x_hat_minus_ = A_ * x_hat_;
+	P_minus_ = A_ * P_ * A_.transpose() + Q_;
+}
+
+void INS_KF::update()
+{
+	K_ = P_minus_ * H_.transpose() * (H_ * P_minus_ * H_.transpose() + R_).inverse();
+	x_hat_ = x_hat_minus_ + K_ * (z_);
+	P_ = (MatrixXd::Identity(x_hat_.rows(), x_hat_.rows()) - K_ * H_) * P_minus_;
+}
+
+void INS_KF::set_A(MatrixXd A)
+{
+	A_ = A;
+}
+
+void INS_KF::set_H(MatrixXd H)
+{
+	H_ = H;
+}
+
+void INS_KF::set_Z(MatrixXd z)
+{
+	z_ = z;
+}
+
+void INS_KF::set_Q(MatrixXd Q)
+{
+	Q_ = Q;
+}
+
+void INS_KF::set_R(MatrixXd R)
+{
+	R_ = R;
+}
+
+void INS_KF::setState(MatrixXd state)
+{
+	x_hat_ = state;
+}
+
+void INS_KF::reset()
+{
+	H_ = MatrixXd::Zero(0, 0);
+	z_ = MatrixXd::Zero(0, 0);
+	R_ = MatrixXd::Zero(0, 0);
+}
+
+MatrixXd INS_KF::getState() const
+{
+	return x_hat_;
+}
+
+MatrixXd INS_KF::getState_minus()
+{
+	return x_hat_minus_;
 }

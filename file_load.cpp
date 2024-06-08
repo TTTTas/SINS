@@ -5,7 +5,7 @@
 #include "cal.h"
 #include "progressbar.hpp"
 
-IMU_data* read_line_data(const std::string& line)
+IMU* read_line_data(const std::string& line)
 {
     double g_x, g_y, g_z, a_x, a_y, a_z;
     g_x = g_y = g_z = a_x = a_y = a_z = 0.0;
@@ -30,13 +30,18 @@ IMU_data* read_line_data(const std::string& line)
     lineStream >> unknown >> comma >> a_z >> comma >> a_y >> comma >> a_x >> comma;
     lineStream >> g_z >> comma >> g_y >> comma >> g_x;
 
-    IMU_data* imu = new IMU_data(timestamp1, -g_y * GYR_SCALE, g_x * GYR_SCALE, -g_z * GYR_SCALE, -a_y * ACC_SCALE, a_x * ACC_SCALE, -a_z * ACC_SCALE);
+    IMU* imu = new IMU;
+    imu->time = timestamp1;
+    imu->dtheta << -g_y * GYR_SCALE, g_x* GYR_SCALE, -g_z * GYR_SCALE;
+    imu->dvel << -a_y * ACC_SCALE, a_x* ACC_SCALE, -a_z * ACC_SCALE;
+    imu->dt = 0;
+    imu->odovel = 0;
     return imu;
 }
 
-int read_imu_asc(INS_Eigen& ins)
+int read_imu_asc(vector<IMU*>& Imu, string path)
 {
-    std::ifstream inputFile(ins.IMU_file_path);
+    std::ifstream inputFile(path);
     std::string line;
     int val = 0;
     if (!inputFile) {
@@ -66,7 +71,7 @@ int read_imu_asc(INS_Eigen& ins)
         else
         {
             val = 1;
-            ins.Imu.push_back(read_line_data(line));
+            Imu.push_back(read_line_data(line));
 
             // 更新已读取字节数
             bytesRead = inputFile.tellg();

@@ -30,6 +30,13 @@
     return result;
 }
 
+Eigen::Vector3d SQR_Mat(Eigen::Vector3d v)
+{
+    Eigen::Vector3d sqr;
+    sqr = v * Eigen::MatrixXd::Identity(3, 3) * v.transpose();
+    return sqr;
+}
+
 // Function to calculate the local gravity value
  double GRS80_g(const Eigen::Vector3d& pos) {
     double B = pos(0);
@@ -53,7 +60,7 @@
 }
 
 // Function to create a skew-symmetric matrix
- Eigen::Matrix3d Cross_vector(const Eigen::Vector3d& vector) {
+ Eigen::Matrix3d Skew(const Eigen::Vector3d& vector) {
     Eigen::Matrix3d cross_matrix;
     cross_matrix << 0, -vector(2), vector(1),
         vector(2), 0, -vector(0),
@@ -83,8 +90,8 @@ Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
 // Function to convert equivalent rotation vector to rotation matrix
  Eigen::Matrix3d Phi2C(const Eigen::Vector3d& Phi) {
     double n_phi = Phi.norm();
-    Eigen::Matrix3d C = Eigen::Matrix3d::Identity() + sin(n_phi) / n_phi * Cross_vector(Phi) +
-        (1 - cos(n_phi)) / (n_phi * n_phi) * Cross_vector(Phi) * Cross_vector(Phi);
+    Eigen::Matrix3d C = Eigen::Matrix3d::Identity() + sin(n_phi) / n_phi * Skew(Phi) +
+        (1 - cos(n_phi)) / (n_phi * n_phi) * Skew(Phi) * Skew(Phi);
     return C;
 }
 
@@ -134,6 +141,56 @@ Eigen::Quaterniond Euler2q(const Eigen::Vector3d& Euler) {
     return q;
 }
 
+Eigen::Quaterniond q_n2e(const Eigen::Vector3d& blh)
+{
+	Eigen::Quaterniond quat;
+
+	double coslon, sinlon, coslat, sinlat;
+
+	coslon = cos(blh[1] * 0.5);
+	sinlon = sin(blh[1] * 0.5);
+	coslat = cos(-M_PI * 0.25 - blh[0] * 0.5);
+	sinlat = sin(-M_PI * 0.25 - blh[0] * 0.5);
+
+	quat.w() = coslat * coslon;
+	quat.x() = -sinlat * sinlon;
+	quat.y() = sinlat * coslon;
+	quat.z() = coslat * sinlon;
+
+	return quat;
+}
+
+Eigen::Vector3d q_n2e_2_blh(const Eigen::Quaterniond& qne, double height)
+{
+	return { -2 * atan(qne.y() / qne.w()) - M_PI * 0.5, 2 * atan2(qne.z(), qne.w()), height };
+}
+
+Eigen::Matrix3d DRi(const Eigen::Vector3d& blh)
+{
+	Eigen::Matrix3d dri = Eigen::Matrix3d::Zero();
+
+    Eigen::Vector2d rmn;
+    rmn << Cal_RM(blh[0]), Cal_RN(blh[0]);
+
+	dri(0, 0) = 1.0 / (rmn[0] + blh[2]);
+	dri(1, 1) = 1.0 / ((rmn[1] + blh[2]) * cos(blh[0]));
+	dri(2, 2) = -1;
+	return dri;
+}
+
+Eigen::Matrix3d DR(const Eigen::Vector3d& blh)
+{
+	Eigen::Matrix3d dr = Eigen::Matrix3d::Zero();
+
+    Eigen::Vector2d rmn;
+    rmn << Cal_RM(blh[0]), Cal_RN(blh[0]);
+
+	dr(0, 0) = rmn[0] + blh[2];
+	dr(1, 1) = (rmn[1] + blh[2]) * cos(blh[0]);
+	dr(2, 2) = -1;
+	return dr;
+}
+
 // Function to update Euler angles to quaternion
 Eigen::Quaterniond Update_Euler_q(const Eigen::Vector3d& E, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& pos, const Eigen::Vector3d& v, double dt) {
     double omiga_e = 7.292115e-5;
@@ -157,17 +214,6 @@ Eigen::Quaterniond Update_Euler_q(const Eigen::Vector3d& E, const Eigen::Vector3
     return (q_nn * q0) * q_bb;
 }
 
-
-// Function to update the position
-Eigen::Vector3d Update_pos(const Eigen::Vector3d& pos0, const Eigen::Vector3d& v0, const Eigen::Vector3d& v1, double dt) {
-    double h = pos0(2) - (v0(2) + v1(2)) / 2.0 * dt;
-    double meanh = (h + pos0(2)) / 2.0;
-    double B = pos0(0) + (v0(0) + v1(0)) / (2.0 * (Cal_RM(pos0(0)) + meanh)) * dt;
-    double meanB = (pos0(0) + B) / 2.0;
-    double L = pos0(1) + (v0(1) + v1(1)) / ((2.0 * (Cal_RN(meanB)) + meanh) * cos(meanB)) * dt;
-    return Eigen::Vector3d(B, L, h);
-}
-
 // Function to convert BLH to NE coordinates
 std::vector<Eigen::Vector2d> BLH2NE(const std::vector<Eigen::Vector3d>& BLH, const Eigen::Vector3d& BLH0) {
     double B = BLH0(0);
@@ -185,47 +231,4 @@ std::vector<Eigen::Vector2d> BLH2NE(const std::vector<Eigen::Vector3d>& BLH, con
     }
 
     return NE;
-}
-
-// Function to update attitude matrix
-Eigen::Matrix3d Update_Euler_C(const Eigen::Matrix3d& E, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& pos, const Eigen::Vector3d& v, double dt) {
-    double B = pos(0);
-    Eigen::Vector3d omiga_ie = Eigen::Vector3d(OMEGA_E * cos(B), 0, -OMEGA_E * sin(B));
-    Eigen::Vector3d omiga_en = Eigen::Vector3d(v(1) / (Cal_RN(B) + pos(2)), -v(0) / (Cal_RM(B) + pos(2)), -v(1) * tan(B) / (Cal_RN(B) + pos(2)));
-    Eigen::Vector3d phi_k = theta1 + theta0.cross(theta1) / 12;
-    Eigen::Vector3d zeta = (omiga_en + omiga_ie) * dt;
-    Eigen::Matrix3d C_bb = Phi2C(phi_k);
-    Eigen::Matrix3d C_nn = Phi2C(-zeta);
-    Eigen::Matrix3d C0 = E;
-    return C_nn * C0 * C_bb;
-}
-
-// Function to calculate gravity/Coriolis integral term
- Eigen::Vector3d Cal_deltv_g_cor(const Eigen::Vector3d g, const Eigen::Vector3d& omiga_ie, const Eigen::Vector3d& omiga_en, const Eigen::Vector3d& v0, double dt) {
-    return (g - (2 * omiga_ie + omiga_en).cross(v0)) * dt;
-}
-
-// Function to calculate specific force integral term
- Eigen::Vector3d Cal_deltv_f(const Eigen::Vector3d& omiga_ie, const Eigen::Vector3d& omiga_en, const Eigen::Matrix3d& C, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& v0, const Eigen::Vector3d& v1, double dt) {
-    Eigen::Vector3d zeta = (omiga_ie + omiga_en) * dt;
-    Eigen::Vector3d dv_f0 = v1 + theta1.cross(v1) / 2 + (theta0.cross(v1) + v0.cross(theta1)) / 12;
-    return (Eigen::Matrix3d::Identity() - 0.5 * Cross_vector(zeta)) * C * dv_f0;
-}
-
-// Function to update velocity
-Eigen::Vector3d Update_velocity(const Eigen::Vector3d& v00, const Eigen::Vector3d& v0, const Eigen::Vector3d& pos, const Eigen::Vector3d& pos0, double dt, const Eigen::Vector3d& dv0, const Eigen::Vector3d& dv1, const Eigen::Matrix3d& C, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1) {
-    double B = pos(0);
-    Eigen::Vector3d omiga_ie = Eigen::Vector3d(OMEGA_E * cos(B), 0, -OMEGA_E * sin(B));
-    Eigen::Vector3d omiga_en = Eigen::Vector3d(v0(1) / (Cal_RN(B) + pos(2)), -v0(0) / (Cal_RM(B) + pos(2)), -v0(1) * tan(B) / (Cal_RN(B) + pos(2)));
-    Eigen::Vector3d g = Eigen::Vector3d(0, 0, GRS80_g(pos));
-    double B0 = pos0(0);
-    Eigen::Vector3d omiga_ie0 = Eigen::Vector3d(OMEGA_E * cos(B0), 0, -OMEGA_E * sin(B0));
-    Eigen::Vector3d omiga_en0 = Eigen::Vector3d(v00(1) / (Cal_RN(B0) + pos(2)), -v00(0) / (Cal_RM(B0) + pos(2)), -v00(1) * tan(B0) / (Cal_RN(B0) + pos(2)));
-    Eigen::Vector3d g0 = Eigen::Vector3d(0, 0, GRS80_g(pos));
-    g = Extrapol(g0, g);
-    omiga_ie = Extrapol(omiga_ie0, omiga_ie);
-    omiga_en = Extrapol(omiga_en0, omiga_en);
-    Eigen::Vector3d dv_g_cor = Cal_deltv_g_cor(g, omiga_ie, omiga_en, Extrapol(v00, v0), dt);
-    Eigen::Vector3d dv_f = Cal_deltv_f(omiga_ie, omiga_en, C, theta0, theta1, dv0, dv1, dt);
-    return v0 + dv_f + dv_g_cor;
 }
