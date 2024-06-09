@@ -34,10 +34,7 @@ public:
      * @param [in] gnss 新的GNSS数据
      * */
     void addGnssData(const GNSS& gnss) {
-
         gnssdata_ = gnss;
-        // 暂不进行数据有效性检查，GNSS数据默认有效
-        gnssdata_.isvalid = true;
     }
 
     /**

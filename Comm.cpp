@@ -97,7 +97,7 @@ Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
 
 // Function to convert equivalent rotation vector to quaternion
  Eigen::Quaterniond Phi2q(const Eigen::Vector3d& Phi) {
-    double half_phi = 0.5 * Phi.norm();
+    double half_phi = Phi.norm();
     if (half_phi != 0) {
         return Eigen::Quaterniond(Eigen::AngleAxisd(half_phi, Phi.normalized()));
     }
@@ -117,19 +117,17 @@ Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
     else {
         Euler << -1, -1, -1;
     }
+    if (Euler[2] < 0) {
+        Euler[2] = M_PI * 2 + Euler[2];
+    }
     return Euler;
 }
 
 // Function to convert Euler angles to a rotation matrix
-Eigen::Matrix3d Euler2C(const Eigen::Vector3d& Euler) {
-    double theta = Euler(1);
-    double phi = Euler(0);
-    double psi = Euler(2);
-    Eigen::Matrix3d C;
-    C << cos(theta) * cos(psi), -cos(phi) * sin(psi) + sin(phi) * sin(theta) * cos(psi), sin(phi)* sin(psi) + cos(phi) * sin(theta) * cos(psi),
-        cos(theta)* sin(psi), cos(phi)* cos(psi) + sin(phi) * sin(theta) * sin(psi), -sin(phi) * cos(psi) + cos(phi) * sin(theta) * sin(psi),
-        -sin(theta), sin(phi)* cos(theta), cos(phi)* cos(theta);
-    return C;
+Eigen::Matrix3d Euler2C(const Eigen::Vector3d& euler) {
+    return Eigen::Matrix3d(Eigen::AngleAxisd(euler[2], Eigen::Vector3d::UnitZ()) *
+        Eigen::AngleAxisd(euler[1], Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(euler[0], Eigen::Vector3d::UnitX()));
 }
 
 // Function to convert Euler angles to quaternion

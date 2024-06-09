@@ -71,9 +71,15 @@ void INS_Eigen::newImuProcess()
     if (res == 0) {
         // 只传播导航状态
         insPropagation(imupre_, imucur_);
+        // 手动更新一下
+        kf_->x_hat_ = kf_->x_hat_minus_;
+        kf_->P_ = kf_->P_minus_;
     }
     else if (res == 1) {
         // GNSS数据靠近上一历元，先对上一历元进行GNSS更新
+        // 手动预测
+        kf_->x_hat_minus_ = kf_->x_hat_;
+        kf_->P_minus_ = kf_->P_;
         gnssUpdate(gnssdata_);
         stateFeedback();
 
@@ -282,7 +288,6 @@ void INS_Eigen::gnssUpdate(GNSS& gnssdata)
     // IMU位置转到GNSS天线相位中心位置
     Eigen::Vector3d antenna_pos;
     Eigen::Matrix3d Dr, Dr_inv;
-    Vector2d rmn; rmn << Cal_RM(pvapre_.pos[0]), Cal_RN(pvapre_.pos[0]);
     Dr_inv = DRi(pvacur_.pos);
     Dr = DR(pvacur_.pos);
     antenna_pos = pvacur_.pos + Dr_inv * pvacur_.att.cbn * options_.antlever;

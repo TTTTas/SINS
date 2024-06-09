@@ -7,6 +7,7 @@
 #include "GNSS_data.h"
 #include "Ins_data.h"
 #include <absl/time/clock.h>
+#include "progressbar.hpp"
 
 void writeNavResult(double time, NavState& navstate, FileSaver& navfile, FileSaver& imuerrfile);
 void writeSTD(double time, Eigen::MatrixXd& cov, FileSaver& stdfile);
@@ -35,6 +36,13 @@ int main()
     FileSaver navfile(cfg.Out_Folder + "/Nav_result.nav", nav_columns);
     FileSaver imuerrfile(cfg.Out_Folder + "/IMU_ERR.txt", imuerr_columns);
     FileSaver stdfile(cfg.Out_Folder + "/STD.txt", std_columns);
+
+    // 检查文件是否正确打开
+    // check if these files are all opened
+    if (!gnssfile.isOpen() || !imufile.isOpen() || !navfile.isOpen() || !imuerrfile.isOpen() || !stdfile.isOpen()) {
+        std::cout << "Failed to open data file!" << std::endl;
+        return -1;
+    }
 
     // 检查处理时间
     // check process time
@@ -73,7 +81,15 @@ int main()
     // used to display processing progress
     int percent = 0, lastpercent = 0;
     double interval = endtime - starttime;
+    // 初始化进度条
+    progressbar bar(interval);
+    bar.set_todo_char(" ");
+    bar.set_done_char("█");
+    bar.set_opening_bracket_char("[");
+    bar.set_closing_bracket_char("]");
 
+    cout << "开始处理组合导航数据:\n";
+    bar.update(0);
     while (true) {
         // 当前IMU状态时间新于GNSS时间时，读取并添加新的GNSS数据到GIEngine
         if (gnss.time < imu_cur.time && !gnssfile.isEof()) {
@@ -101,9 +117,9 @@ int main()
         writeSTD(timestamp, cov, stdfile);
 
         // 显示处理进展
-        percent = int((imu_cur.time - starttime) / interval * 100);
-        if (percent - lastpercent >= 1) {
-            std::cout << " - Processing: " << std::setw(3) << percent << "%\r" << std::flush;
+        percent = (imu_cur.time - starttime) / interval * 100;
+        if (percent - lastpercent >= 0.5) {
+            bar.update(imu_cur.time - starttime);
             lastpercent = percent;
         }
 
@@ -123,7 +139,7 @@ int main()
     std::cout << "From " << starttime << " s to " << endtime << " s, total " << interval << " s!" << std::endl;
     std::cout << "Cost " << absl::ToDoubleSeconds(te - ts) << " s in total" << std::endl;
 
-	system("pause");
+	std::system("pause");
 
 	return 0;
 }

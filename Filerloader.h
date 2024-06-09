@@ -98,8 +98,14 @@ public:
     const GNSS& next() {
         string line;
         getline(filefp_, line);
+        if (line.empty())
+        {
+            gnss_.isvalid = false;
+            return gnss_;
+        }
         data = read_line_gnss(line);
         gnss_.time = data[0];
+        gnss_.isvalid = true;
         if (data.size() == 7)
         {
             gnss_.blh << deg2rad(data[1]), deg2rad(data[2]), data[3];
@@ -114,8 +120,6 @@ public:
             gnss_.std << data[7], data[8], data[9];
             gnss_.vel_std << data[10], data[11], data[12];
         }
-        gnss_.blh[0] *= DEG2RAD;
-        gnss_.blh[1] *= DEG2RAD;
 
         return gnss_;
     }

@@ -75,7 +75,7 @@ typedef struct GINSOptions {
     Eigen::Vector3d antlever = { 0, 0, 0 };
 
     void print_options() {
-        std::cout << "---------------KF-GINS Options:---------------" << std::endl;
+        std::cout << "---------------SINS Options:---------------" << std::endl;
 
         // ´òÓ¡³õÊ¼×´Ì¬
         std::cout << " - Initial State: " << std::endl;
