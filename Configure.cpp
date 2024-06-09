@@ -89,8 +89,8 @@ INS_Configure::INS_Configure()
 	Init_time = 5 * 60;
 	Samp_rate = 200;
 
-	start_time = 456300;
-	end_time = 457000;
+	start_time = 456250.005;
+	end_time = 456500;
 
 	gins_options.initstate.pos << deg2rad(30.4447873701), deg2rad(114.4718632047), 20.899;
 	gins_options.initstate.vel << 0.0, 0.0, 0.0;

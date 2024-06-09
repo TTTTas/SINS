@@ -99,7 +99,9 @@ void velUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& 
     // b系比力积分项
     d_vfb = imu_cur.dvel + temp1 + temp2 + temp3;
 
-    // 比力积分项投
+    // 比力积分项
+    temp1 = (wie_n + wen_n) * imu_cur.dt / 2;
+    cnn = I33 - Skew(temp1);
     d_vfn = cnn * pva_pre.att.cbn * d_vfb;
 
     // 计算重力/哥式积分项

@@ -106,6 +106,7 @@ int main()
             std::cout << " - Processing: " << std::setw(3) << percent << "%\r" << std::flush;
             lastpercent = percent;
         }
+
     }
 
     // 关闭打开的文件
