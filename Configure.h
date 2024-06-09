@@ -78,7 +78,7 @@ public:
 	const char* Imu_path;
 	const char* GNSS_path;
 	const char* ODO_path;
-	const char* Out_Folder;
+	string Out_Folder;
 	// 解算配置
 	bool use_GNSS_vel;
 	bool use_ZUPT;
@@ -89,7 +89,8 @@ public:
 	// 初始化信息
 	int Init_time;
 	int Samp_rate;
-
+	double start_time;
+	double end_time;
 	GINSOptions gins_options;
 	// 安装参数
 	Vector3d odo_lever;			//m

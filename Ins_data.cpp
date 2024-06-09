@@ -1,6 +1,8 @@
 #include "Ins_data.h"
 #include "comm.h"
 #include <fstream>
+
+#include "Ins_Mech.h"
 #include "progressbar.hpp"
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -12,38 +14,33 @@ INS_Eigen::INS_Eigen(GINSOptions& options)
     timestamp_ = 0;
 
     // 设置协方差矩阵，系统噪声阵和系统误差状态矩阵大小
-    // resize covariance matrix, system noise matrix, and system error state matrix
     MatrixXd Cov_=MatrixXd::Zero(RANK, RANK);
-    MatrixXd Qc_=MatrixXd::Zero(NOISERANK, NOISERANK);
+    Qc = MatrixXd::Zero(NOISERANK, NOISERANK);
 
     // 初始化系统噪声阵
-    // initialize noise matrix
     auto imunoise = options_.imunoise;
-    Qc_.block(ARW_ID, ARW_ID, 3, 3) = imunoise.gyr_arw.cwiseProduct(imunoise.gyr_arw).asDiagonal();
-    Qc_.block(VRW_ID, VRW_ID, 3, 3) = imunoise.acc_vrw.cwiseProduct(imunoise.acc_vrw).asDiagonal();
-    Qc_.block(BGSTD_ID, BGSTD_ID, 3, 3) =
+    Qc.block(ARW_ID, ARW_ID, 3, 3) = imunoise.gyr_arw.cwiseProduct(imunoise.gyr_arw).asDiagonal();
+    Qc.block(VRW_ID, VRW_ID, 3, 3) = imunoise.acc_vrw.cwiseProduct(imunoise.acc_vrw).asDiagonal();
+    Qc.block(BGSTD_ID, BGSTD_ID, 3, 3) =
         2 / imunoise.corr_time * imunoise.gyrbias_std.cwiseProduct(imunoise.gyrbias_std).asDiagonal();
-    Qc_.block(BASTD_ID, BASTD_ID, 3, 3) =
+    Qc.block(BASTD_ID, BASTD_ID, 3, 3) =
         2 / imunoise.corr_time * imunoise.accbias_std.cwiseProduct(imunoise.accbias_std).asDiagonal();
-    Qc_.block(SGSTD_ID, SGSTD_ID, 3, 3) =
+    Qc.block(SGSTD_ID, SGSTD_ID, 3, 3) =
         2 / imunoise.corr_time * imunoise.gyrscale_std.cwiseProduct(imunoise.gyrscale_std).asDiagonal();
-    Qc_.block(SASTD_ID, SASTD_ID, 3, 3) =
+    Qc.block(SASTD_ID, SASTD_ID, 3, 3) =
         2 / imunoise.corr_time * imunoise.accscale_std.cwiseProduct(imunoise.accscale_std).asDiagonal();
 
     // 设置系统状态(位置、速度、姿态和IMU误差)初值和初始协方差
 	// 初始化位置、速度、姿态
-    // initialize position, velocity and attitude
     pvacur_.pos = options.initstate.pos;
     pvacur_.vel = options.initstate.vel;
     pvacur_.att.euler = options.initstate.euler;
     pvacur_.att.cbn = Euler2C(pvacur_.att.euler);
     pvacur_.att.qbn = Euler2q(pvacur_.att.euler);
     // 初始化IMU误差
-    // initialize imu error
     imuerror_ = options.initstate.imuerror;
 
     // 给上一时刻状态赋同样的初值
-    // set the same value to the previous state
     pvapre_ = pvacur_;
 
     // 初始化协方差
@@ -58,7 +55,6 @@ INS_Eigen::INS_Eigen(GINSOptions& options)
     Cov_.block(SA_ID, SA_ID, 3, 3) = imuerror_std.accscale.cwiseProduct(imuerror_std.accscale).asDiagonal();
 
     kf_ = new INS_KF(MatrixXd::Zero(RANK, 1), Cov_);
-    kf_->set_Q(Qc_);
 }
 
 void INS_Eigen::newImuProcess()
@@ -166,18 +162,17 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     // 对当前IMU数据(imucur)补偿误差, 上一IMU数据(imupre)已经补偿过了
     imuCompensate(imucur);
     // IMU状态更新(机械编排算法)
-    // update imustate(mechanization)
-    INSMech::insMech(pvapre_, pvacur_, imupre, imucur);
+    insMech(pvapre_, pvacur_, imupre, imucur);
 
     // 系统噪声传播，姿态误差采用phi角误差模型
-    Eigen::MatrixXd H, F, Qd, G;
+    Eigen::MatrixXd Phi, F, Qd, G;
 
     // 初始化Phi阵(状态转移矩阵)，F阵，Qd阵(传播噪声阵)，G阵(噪声驱动阵)
-    H.resizeLike(kf_->Q_);
-    F.resizeLike(kf_->Q_);
-    Qd.resizeLike(kf_->Q_);
+    Phi.resizeLike(kf_->P_);
+    F.resizeLike(kf_->P_);
+    Qd.resizeLike(kf_->P_);
     G.resize(RANK, NOISERANK);
-    H.setIdentity();
+    Phi.setIdentity();
     F.setZero();
     Qd.setZero();
     G.setZero();
@@ -202,7 +197,6 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     omega = imucur.dtheta / imucur.dt;
 
     // 位置误差
-    // position error
     temp.setZero();
     temp(0, 0) = -pvapre_.vel[2] / rmh;
     temp(0, 2) = pvapre_.vel[0] / rmh;
@@ -213,7 +207,6 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     F.block(P_ID, V_ID, 3, 3) = Eigen::Matrix3d::Identity();
 
     // 速度误差
-    // velocity error
     temp.setZero();
     temp(0, 0) = -2 * pvapre_.vel[1] * OMEGA_E * cos(pvapre_.pos[0]) / rmh -
         pow(pvapre_.vel[1], 2) / rmh / rnh / pow(cos(pvapre_.pos[0]), 2);
@@ -240,7 +233,6 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     F.block(V_ID, SA_ID, 3, 3) = pvapre_.att.cbn * (accel.asDiagonal());
 
     // 姿态误差
-    // attitude error
     temp.setZero();
     temp(0, 0) = -OMEGA_E * sin(pvapre_.pos[0]) / rmh;
     temp(0, 2) = pvapre_.vel[1] / rnh / rnh;
@@ -258,14 +250,12 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     F.block(PHI_ID, SG_ID, 3, 3) = -pvapre_.att.cbn * (omega.asDiagonal());
 
     // IMU零偏误差和比例因子误差，建模成一阶高斯-马尔科夫过程
-    // imu bias error and scale error, modeled as the first-order Gauss-Markov process
     F.block(BG_ID, BG_ID, 3, 3) = -1 / options_.imunoise.corr_time * Eigen::Matrix3d::Identity();
     F.block(BA_ID, BA_ID, 3, 3) = -1 / options_.imunoise.corr_time * Eigen::Matrix3d::Identity();
     F.block(SG_ID, SG_ID, 3, 3) = -1 / options_.imunoise.corr_time * Eigen::Matrix3d::Identity();
     F.block(SA_ID, SA_ID, 3, 3) = -1 / options_.imunoise.corr_time * Eigen::Matrix3d::Identity();
 
     // 系统噪声驱动矩阵
-    // system noise driven matrix
     G.block(V_ID, VRW_ID, 3, 3) = pvapre_.att.cbn;
     G.block(PHI_ID, ARW_ID, 3, 3) = pvapre_.att.cbn;
     G.block(BG_ID, BGSTD_ID, 3, 3) = Eigen::Matrix3d::Identity();
@@ -274,18 +264,17 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     G.block(SA_ID, SASTD_ID, 3, 3) = Eigen::Matrix3d::Identity();
 
     // 状态转移矩阵
-    // compute the state transition matrix
-    H.setIdentity();
-    H = H + F * imucur.dt;
+    Phi.setIdentity();
+    Phi = Phi + F * imucur.dt;
 
     // 计算系统传播噪声
-    // compute system propagation noise
-    Qd = G * kf_->Q_ * G.transpose() * imucur.dt;
-    Qd = (H * Qd * H.transpose() + Qd) / 2;
+    Qd = G * Qc * G.transpose() * imucur.dt;
+    Qd = (Phi * Qd * Phi.transpose() + Qd) / 2;
 
     // EKF预测传播系统协方差和系统误差状态
-    kf_->set_H(H);
-    kf_->set_Q(Qd);    
+    kf_->set_A(Phi);
+    kf_->set_Q(Qd);
+    kf_->predict();
 }
 
 void INS_Eigen::gnssUpdate(GNSS& gnssdata)
@@ -299,7 +288,6 @@ void INS_Eigen::gnssUpdate(GNSS& gnssdata)
     antenna_pos = pvacur_.pos + Dr_inv * pvacur_.att.cbn * options_.antlever;
 
     // GNSS位置测量新息
-    // compute GNSS position innovation
     Eigen::MatrixXd dz;
     dz = Dr * (antenna_pos - gnssdata.blh);
 
@@ -312,19 +300,16 @@ void INS_Eigen::gnssUpdate(GNSS& gnssdata)
     H_gnsspos.block(0, PHI_ID, 3, 3) = Skew(pvacur_.att.cbn * options_.antlever);
 
     // 位置观测噪声阵
-    // construct measurement noise matrix
     Eigen::MatrixXd R_gnsspos;
     R_gnsspos = gnssdata.std.cwiseProduct(gnssdata.std).asDiagonal();
 
     // EKF更新协方差和误差状态
-    // do EKF update to update covariance and error state
     kf_->set_H(H_gnsspos);
     kf_->set_Z(dz);
     kf_->set_R(R_gnsspos);
     kf_->update();
 
     // GNSS更新之后设置为不可用
-    // Set GNSS invalid after update
     gnssdata.isvalid = false;
 }
 
@@ -333,19 +318,16 @@ void INS_Eigen::stateFeedback()
     Eigen::Vector3d vectemp;
 
     // 位置误差反馈
-    // posisiton error feedback
     Eigen::Vector3d delta_r = kf_->x_hat_.block(P_ID, 0, 3, 1);
     Vector2d rmn; rmn << Cal_RM(pvapre_.pos[0]), Cal_RN(pvapre_.pos[0]);
     Eigen::Matrix3d Dr_inv = DRi(pvacur_.pos);
     pvacur_.pos -= Dr_inv * delta_r;
 
     // 速度误差反馈
-    // velocity error feedback
     vectemp = kf_->x_hat_.block(V_ID, 0, 3, 1);
     pvacur_.vel -= vectemp;
 
     // 姿态误差反馈
-    // attitude error feedback
     vectemp = kf_->x_hat_.block(PHI_ID, 0, 3, 1);
     Eigen::Quaterniond qpn = Phi2q(vectemp);
     pvacur_.att.qbn = qpn * pvacur_.att.qbn;
@@ -353,21 +335,18 @@ void INS_Eigen::stateFeedback()
     pvacur_.att.euler = C2Euler(pvacur_.att.cbn);
 
     // IMU零偏误差反馈
-    // IMU bias error feedback
     vectemp = kf_->x_hat_.block(BG_ID, 0, 3, 1);
     imuerror_.gyrbias += vectemp;
     vectemp = kf_->x_hat_.block(BA_ID, 0, 3, 1);
     imuerror_.accbias += vectemp;
 
     // IMU比例因子误差反馈
-    // IMU sacle error feedback
     vectemp = kf_->x_hat_.block(SG_ID, 0, 3, 1);
     imuerror_.gyrscale += vectemp;
     vectemp = kf_->x_hat_.block(SA_ID, 0, 3, 1);
     imuerror_.accscale += vectemp;
 
     // 误差状态反馈到系统状态后,将误差状态清零
-    // set 'dx' to zero after feedback error state to system state
     kf_->x_hat_.setZero();
 }
 

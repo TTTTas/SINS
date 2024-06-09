@@ -74,10 +74,10 @@ Sate_Configure::Sate_Configure()
 
 INS_Configure::INS_Configure()
 {
-	Imu_path = "IMU_data.ASC";
-	GNSS_path = "GNSS_data.pos";
+	Imu_path = "Leador-A15.txt";
+	GNSS_path = "GNSS-RTK.txt";
 	ODO_path = "ODO.bin";
-	Out_Folder="D:\\INS\\result\\";
+	Out_Folder="./Ins/result";
 
 	use_GNSS_vel = false;
 	use_ODONHC = false;
@@ -87,30 +87,33 @@ INS_Configure::INS_Configure()
 	use_GNSS_file = true;
 
 	Init_time = 5 * 60;
-	Samp_rate = 100;
+	Samp_rate = 200;
 
-	gins_options.initstate.pos << deg2rad(30.53009), deg2rad(114.35609), 26.704;
+	start_time = 456300;
+	end_time = 457000;
+
+	gins_options.initstate.pos << deg2rad(30.4447873701), deg2rad(114.4718632047), 20.899;
 	gins_options.initstate.vel << 0.0, 0.0, 0.0;
-	gins_options.initstate.euler << 0.0, 0.0, 0.0;
+	gins_options.initstate.euler << 0.85421502, -2.03480295, 185.70235133;
 
-	gins_options.initstate_std.pos << 0.05, 0.05, 0.1;
-	gins_options.initstate_std.vel << 0.05, 0.05, 0.05;
-	gins_options.initstate_std.euler << 0.1, 0.1, 0.5;
+	gins_options.initstate_std.pos << 0.005, 0.004, 0.008;
+	gins_options.initstate_std.vel << 0.003, 0.004, 0.004;
+	gins_options.initstate_std.euler << 0.003, 0.003, 0.023;
 
-	gins_options.initstate.imuerror.gyrbias << -3700, 3400, 1000;
-	gins_options.initstate.imuerror.accbias << -10000, 3500, -6700;
-	gins_options.initstate.imuerror.gyrscale << 10000, 1700, -500;
-	gins_options.initstate.imuerror.accscale << 0, 2000, 0;
-	gins_options.imunoise.gyrbias_std << 50, 50, 50;
-	gins_options.imunoise.accbias_std << 250, 250, 250;
-	gins_options.imunoise.gyrscale_std << 1000, 1000, 1000;
-	gins_options.imunoise.accscale_std << 1000, 1000, 1000;
+	gins_options.initstate.imuerror.gyrbias << 0, 0, 0;
+	gins_options.initstate.imuerror.accbias << 0, 0, 0;
+	gins_options.initstate.imuerror.gyrscale << 0, 0, 0;
+	gins_options.initstate.imuerror.accscale << 0, 0, 0;
+	gins_options.imunoise.gyrbias_std << 0.027, 0.027, 0.027;
+	gins_options.imunoise.accbias_std << 15.0, 15.0, 15.0;
+	gins_options.imunoise.gyrscale_std << 300.0, 300.0, 300.0;
+	gins_options.imunoise.accscale_std << 300.0, 300.0, 300.0;
 
-	gins_options.imunoise.gyr_arw << 0.24, 0.24, 0.24;
-	gins_options.imunoise.acc_vrw << 0.24, 0.24, 0.24;
-	gins_options.imunoise.corr_time = 1;
+	gins_options.imunoise.gyr_arw << 0.003, 0.003, 0.003;
+	gins_options.imunoise.acc_vrw << 0.03, 0.03, 0.03;
+	gins_options.imunoise.corr_time = 4;
 
-	gins_options.antlever << 0.045, 0.46,-0.238;
+	gins_options.antlever << 0.136, -0.301, -0.184;
 	odo_lever << -0.522, -0.47, 1.797;
 
 	ODONHC_mean_noise << 0.1, 0.1, 0.1;

@@ -12,7 +12,7 @@ class INS_Eigen
 public:
     explicit INS_Eigen(GINSOptions& options);
 
-    ~INS_Eigen()() = default;
+    ~INS_Eigen() = default;
 
     /**
      * @brief 添加新的IMU数据，(不)补偿IMU误差
@@ -169,6 +169,7 @@ private:
 
     // Kalman滤波相关
     INS_KF* kf_;
+    MatrixXd Qc;
 
     const int RANK = 21;
     const int NOISERANK = 18;

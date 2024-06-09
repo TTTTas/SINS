@@ -9,9 +9,15 @@
 #define ACC_SCALE 1.5258789063E-06
 #define GYR_SCALE 1.0850694444E-07
 
-IMU* read_line_data(const std::string& line);
+IMU read_line_imu_txt(const std::string& line);
 
-int read_imu_asc(vector<IMU*>& Imu, string path);
+IMU read_line_imu(const std::string& line);
+
+int read_imu_asc(vector<IMU*>& Imu, INS_Configure cfg);
+
+vector<double> read_line_gnss(const std::string& line);
+
+int read_GNSS(vector<GNSS*>& Gnss, INS_Configure cfg);
 
 bool isAllSpaces(const std::string& str);
 

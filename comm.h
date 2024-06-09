@@ -23,7 +23,7 @@ Eigen::Vector3d rad2deg(Eigen::Vector3d& radians);
 Eigen::Vector3d Extrapol(const Eigen::Vector3d& v0, const Eigen::Vector3d& v1);
 
 // 向量元素平方
-Eigen::Vector3d SQR_Mat(Eigen::Vector3d v);
+Eigen::Matrix3d SQR_Mat(Eigen::Vector3d v);
 
 // Function to calculate the local gravity value
  double GRS80_g(const Eigen::Vector3d& pos);

@@ -4,8 +4,21 @@
 
 #include "cal.h"
 #include "progressbar.hpp"
+#include <absl/strings/str_split.h>
 
-IMU* read_line_data(const std::string& line)
+
+IMU read_line_imu_txt(const std::string& line)
+{
+    vector<double>data_;
+    IMU imu;
+    std::stringstream lineStream(line);
+    lineStream >> imu.time >> imu.dtheta[0] >> imu.dtheta[1] >> imu.dtheta[2];
+    lineStream >> imu.dvel[0] >> imu.dvel[1] >> imu.dvel[2];
+    imu.dt = 0;
+	return imu;
+}
+
+IMU read_line_imu(const std::string& line)
 {
     double g_x, g_y, g_z, a_x, a_y, a_z;
     g_x = g_y = g_z = a_x = a_y = a_z = 0.0;
@@ -30,18 +43,88 @@ IMU* read_line_data(const std::string& line)
     lineStream >> unknown >> comma >> a_z >> comma >> a_y >> comma >> a_x >> comma;
     lineStream >> g_z >> comma >> g_y >> comma >> g_x;
 
-    IMU* imu = new IMU;
-    imu->time = timestamp1;
-    imu->dtheta << -g_y * GYR_SCALE, g_x* GYR_SCALE, -g_z * GYR_SCALE;
-    imu->dvel << -a_y * ACC_SCALE, a_x* ACC_SCALE, -a_z * ACC_SCALE;
-    imu->dt = 0;
-    imu->odovel = 0;
+    IMU imu;
+    imu.time = timestamp1;
+    imu.dtheta << -g_y * GYR_SCALE, g_x* GYR_SCALE, -g_z * GYR_SCALE;
+    imu.dvel << -a_y * ACC_SCALE, a_x* ACC_SCALE, -a_z * ACC_SCALE;
+    imu.dt = 0;
+    imu.odovel = 0;
     return imu;
 }
 
-int read_imu_asc(vector<IMU*>& Imu, string path)
+int read_imu_asc(vector<IMU*>& Imu, INS_Configure cfg)
 {
-    std::ifstream inputFile(path);
+    std::ifstream inputFile(cfg.Imu_path);
+    std::string line;
+    int val = 0;
+    if (!inputFile) {
+        std::cerr << "无法打开文件!" << std::endl;
+        return 1;
+    }
+
+    // 获取文件总大小（字节）
+    inputFile.seekg(0, std::ios::end);
+    std::streamsize totalSize = inputFile.tellg();
+    inputFile.seekg(0, std::ios::beg);
+
+    // 初始化进度条
+    progressbar bar(totalSize);
+    bar.set_todo_char(" ");
+    bar.set_done_char("█");
+    bar.set_opening_bracket_char("[");
+    bar.set_closing_bracket_char("]");
+    std::streamsize bytesRead = 0;
+
+    std::printf("读取文件:\n");
+    std::streamsize bytes_last = 0;
+    double rate = cfg.Samp_rate;
+    while (std::getline(inputFile, line)) {
+        if (line.empty()) {
+            continue;
+        }
+        else
+        {
+            val = 1;
+            IMU* imu = new IMU();
+            *imu = read_line_imu(line);
+            Imu.push_back(imu);
+            Imu.back()->dt = 1 / rate;
+            if(Imu.size()>1)
+            {
+                double dt_ = Imu.back()->time - Imu[Imu.size() - 2]->time;
+                if (dt_ < 2 / rate)Imu.back()->dt = dt_;
+            }
+
+            // 更新已读取字节数
+            bytesRead = inputFile.tellg();
+            // 计算进度百分比并更新进度条
+            if(bytesRead-bytes_last>0.005*totalSize)
+            {
+                bar.update(bytesRead);
+                bytes_last = bytesRead;
+            }
+        }
+
+    }
+    return val;
+}
+
+vector<double> read_line_gnss(const std::string& line)
+{
+    std::vector<double> datas;
+    string d;
+    std::istringstream iss(line);
+    while(iss>>d)
+    {
+        datas.push_back(stod(d));
+    }
+
+    return datas;
+}
+
+int read_GNSS(vector<GNSS*>& Gnss, INS_Configure cfg)
+{
+    std::ifstream inputFile(cfg.GNSS_path);
     std::string line;
     int val = 0;
     if (!inputFile) {
@@ -71,12 +154,30 @@ int read_imu_asc(vector<IMU*>& Imu, string path)
         else
         {
             val = 1;
-            Imu.push_back(read_line_data(line));
+            GNSS* gnss = new GNSS();
+            vector<double> data = read_line_gnss(line);
+            gnss->time = data[0];
+            if(data.size()==7)
+            {
+                gnss->blh << deg2rad(data[1]), deg2rad(data[2]), data[3];
+                gnss->std << data[4], data[4], data[5];
+                gnss->vel << 0, 0, 0;
+                gnss->vel_std << 0, 0, 0;
+                cfg.use_GNSS_vel = false;
+            }
+            else
+            {
+                gnss->blh << data[1], data[2], data[3];
+                gnss->vel << data[4], data[4], data[5];
+                gnss->std << data[7], data[8], data[9];
+                gnss->vel_std << data[10], data[11], data[12];
+            }
+            Gnss.push_back(gnss);
 
             // 更新已读取字节数
             bytesRead = inputFile.tellg();
             // 计算进度百分比并更新进度条
-            if(bytesRead-bytes_last>0.005*totalSize)
+            if (bytesRead - bytes_last > 0.005 * totalSize)
             {
                 bar.update(bytesRead);
                 bytes_last = bytesRead;

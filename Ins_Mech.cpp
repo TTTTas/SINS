@@ -3,7 +3,6 @@
 Eigen::Vector3d Init_Yaw(std::vector<IMU*> imu_data, INS_Configure cfg)
 {
     Eigen::Vector3d Atti;
-    int total_time = cfg.Samp_rate * cfg.Init_time;
     double mean_x, mean_y, mean_z;
     double meanfx = 0.0, meanfy = 0.0, meanfz = 0.0;
     mean_x = mean_y = mean_z = 0.0;
@@ -16,12 +15,12 @@ Eigen::Vector3d Init_Yaw(std::vector<IMU*> imu_data, INS_Configure cfg)
         meanfy += imu->dvel[1];
         meanfz += imu->dvel[2];
     }
-    mean_x /= total_time;
-    mean_y /= total_time;
-    mean_z /= total_time;
-    meanfx /= total_time;
-    meanfy /= total_time;
-    meanfz /= total_time;
+    mean_x /= imu_data.size();
+    mean_y /= imu_data.size();
+    mean_z /= imu_data.size();
+    meanfx /= imu_data.size();
+    meanfy /= imu_data.size();
+    meanfz /= imu_data.size();
 
     Eigen::Vector3d g_n;
     g_n << 0, 0, GRS80_g(cfg.gins_options.initstate.pos);
@@ -80,7 +79,7 @@ void velUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& 
     Eigen::Vector3d d_vfb, d_vfn, d_vgn, gl, midvel, midpos;
     Eigen::Vector3d temp1, temp2, temp3;
     Eigen::Matrix3d cnn, I33 = Eigen::Matrix3d::Identity();
-    Eigen::Quaterniond qne, qee, qnn, qbb, q1, q2;
+    Eigen::Quaterniond qne, qee, qnn;
 
     // 计算地理参数，子午圈半径和卯酉圈半径，地球自转角速度投影到n系, n系相对于e系转动角速度投影到n系，重力值
     Eigen::Vector2d rmrn;
@@ -148,7 +147,6 @@ void posUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& 
     midpos = pva_pre.pos + DRi(pva_pre.pos) * midvel * imu_cur.dt / 2;
 
     // 重新计算中间时刻地理参数
-    // recompute rmrn, wie_n, wen_n at k-1/2
     Eigen::Vector2d rmrn;
     Eigen::Vector3d wie_n, wen_n;
     rmrn << Cal_RM(midpos[0]), Cal_RN(midpos[0]);
@@ -164,7 +162,6 @@ void posUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& 
     qee = Phi2q(temp2);
 
     // 位置更新完成
-    // position update finish
     qne = q_n2e(pva_pre.pos);
     qne = qee * qne * qnn;
     pva_cur.pos[2] = pva_pre.pos[2] - midvel[2] * imu_cur.dt;

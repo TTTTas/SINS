@@ -30,9 +30,9 @@
     return result;
 }
 
-Eigen::Vector3d SQR_Mat(Eigen::Vector3d v)
+Eigen::Matrix3d SQR_Mat(Eigen::Vector3d v)
 {
-    Eigen::Vector3d sqr;
+    Eigen::Matrix3d sqr;
     sqr = v * Eigen::MatrixXd::Identity(3, 3) * v.transpose();
     return sqr;
 }

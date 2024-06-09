@@ -9,6 +9,8 @@ typedef struct GNSS {
 
     Eigen::Vector3d blh;
     Eigen::Vector3d std;
+    Eigen::Vector3d vel;
+    Eigen::Vector3d vel_std;
 
     bool isvalid;
 } GNSS;
