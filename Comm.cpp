@@ -45,6 +45,14 @@ Eigen::Matrix3d SQR_Mat(Eigen::Vector3d v)
     return g0 - (3.087691089e-6 - 4.397731e-9 * sin(B) * sin(B)) * H + 0.721e-12 * H * H;
 }
 
+Eigen::Vector3d g_e(Eigen::Vector3d pos)
+{
+    double g = GRS80_g(pos);
+    Eigen::Vector3d g_e;
+    g_e << cos(pos[1]) * cos(pos[0]) * (-g), sin(pos[1])* cos(pos[0])* (-g), sin(pos[0])* (-g);
+    return g_e;
+}
+
 // Function to calculate the meridian radius
  double Cal_RM(double B) {
     const double a = 6378137.0;

@@ -168,10 +168,10 @@ private:
     INS_KF* kf_;
     MatrixXd Qc;
 
-    const int RANK = 21;
-    const int NOISERANK = 18;
+    const int RANK = 15;
+    const int NOISERANK = 12;
 
     // ◊¥Ã¨ID∫Õ‘Î…˘ID
-    enum State_ID { P_ID = 0, V_ID = 3, PHI_ID = 6, BG_ID = 9, BA_ID = 12, SG_ID = 15, SA_ID = 18 };
-    enum Noise_ID { VRW_ID = 0, ARW_ID = 3, BGSTD_ID = 6, BASTD_ID = 9, SGSTD_ID = 12, SASTD_ID = 15 };
+    enum State_ID { P_ID = 0, V_ID = 3, PHI_ID = 6, BG_ID = 9, BA_ID = 12};
+    enum Noise_ID { VRW_ID = 0, ARW_ID = 3, BGSTD_ID = 6, BASTD_ID = 9};
 };

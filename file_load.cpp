@@ -45,8 +45,8 @@ IMU read_line_imu(const std::string& line)
 
     IMU imu;
     imu.time = timestamp1;
-    imu.dtheta << -g_y * GYR_SCALE, g_x* GYR_SCALE, -g_z * GYR_SCALE;
-    imu.dvel << -a_y * ACC_SCALE, a_x* ACC_SCALE, -a_z * ACC_SCALE;
+    imu.dtheta << g_x * GYR_SCALE, -g_y* GYR_SCALE, g_z * GYR_SCALE;
+    imu.dvel << a_x * ACC_SCALE, -a_y* ACC_SCALE, a_z * ACC_SCALE;
     imu.dt = 0;
     imu.odovel = 0;
     return imu;

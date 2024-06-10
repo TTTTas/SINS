@@ -1,5 +1,7 @@
 #include "Ins_Mech.h"
 
+#include "cal.h"
+
 Eigen::Vector3d Init_Yaw(std::vector<IMU*> imu_data, INS_Configure cfg)
 {
     Eigen::Vector3d Atti;
@@ -66,142 +68,51 @@ Eigen::Vector3d Init_Yaw(std::vector<IMU*> imu_data, INS_Configure cfg)
     return Atti;
 }
 
-void insMech(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur) {
-
-    // 依次进行速度更新、位置更新、姿态更新, 不可调换顺序
+void insMech(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur)
+{
+    attUpdate(pva_pre, pva_cur, imu_pre, imu_cur);
     velUpdate(pva_pre, pva_cur, imu_pre, imu_cur);
     posUpdate(pva_pre, pva_cur, imu_pre, imu_cur);
-    attUpdate(pva_pre, pva_cur, imu_pre, imu_cur);
-}
-
-void velUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur) {
-
-    Eigen::Vector3d d_vfb, d_vfn, d_vgn, gl, midvel, midpos;
-    Eigen::Vector3d temp1, temp2, temp3;
-    Eigen::Matrix3d cnn, I33 = Eigen::Matrix3d::Identity();
-    Eigen::Quaterniond qne, qee, qnn;
-
-    // 计算地理参数，子午圈半径和卯酉圈半径，地球自转角速度投影到n系, n系相对于e系转动角速度投影到n系，重力值
-    Eigen::Vector2d rmrn;
-    double B_pre = pva_pre.pos(0);
-    rmrn << Cal_RM(pva_pre.pos(0)), Cal_RN(pva_pre.pos(0));
-    Eigen::Vector3d wie_n, wen_n;
-    wie_n << OMEGA_E * cos(B_pre), 0, -OMEGA_E * sin(B_pre);
-    wen_n << pva_pre.vel[1] / (rmrn[1] + pva_pre.pos[2]), -pva_pre.vel[0] / (rmrn[0] + pva_pre.pos[2]),
-        -pva_pre.vel[1] * tan(pva_pre.pos[0]) / (rmrn[1] + pva_pre.pos[2]);
-    double gravity = GRS80_g(pva_pre.pos);
-
-    // 旋转效应和双子样划桨效应
-    temp1 = imu_cur.dtheta.cross(imu_cur.dvel) / 2;
-    temp2 = imu_pre.dtheta.cross(imu_cur.dvel) / 12;
-    temp3 = imu_pre.dvel.cross(imu_cur.dtheta) / 12;
-
-    // b系比力积分项
-    d_vfb = imu_cur.dvel + temp1 + temp2 + temp3;
-
-    // 比力积分项
-    temp1 = (wie_n + wen_n) * imu_cur.dt / 2;
-    cnn = I33 - Skew(temp1);
-    d_vfn = cnn * pva_pre.att.cbn * d_vfb;
-
-    // 计算重力/哥式积分项
-    gl << 0, 0, gravity;
-    d_vgn = (gl - (2 * wie_n + wen_n).cross(pva_pre.vel)) * imu_cur.dt;
-
-    // 得到中间时刻速度
-    midvel = pva_pre.vel + (d_vfn + d_vgn) / 2;
-
-    // 外推得到中间时刻位置
-    qnn = Phi2q(temp1);
-    temp2 << 0, 0, -OMEGA_E * imu_cur.dt / 2;
-    qee = Phi2q(temp2);
-    qne = q_n2e(pva_pre.pos);
-    qne = qee * qne * qnn;
-    midpos[2] = pva_pre.pos[2] - midvel[2] * imu_cur.dt / 2;
-    midpos = q_n2e_2_blh(qne, midpos[2]);
-
-    // 重新计算中间时刻的rmrn, wie_e, wen_n
-    rmrn << Cal_RM(midpos(0)), Cal_RN(midpos(0));
-    wie_n << OMEGA_E * cos(midpos[0]), 0, -OMEGA_E * sin(midpos[0]);
-    wen_n << midvel[1] / (rmrn[1] + midpos[2]), -midvel[0] / (rmrn[0] + midpos[2]),
-        -midvel[1] * tan(midpos[0]) / (rmrn[1] + midpos[2]);
-
-    // 重新计算n系下平均比力积分项
-    temp3 = (wie_n + wen_n) * imu_cur.dt / 2;
-    cnn = I33 - Skew(temp3);
-    d_vfn = cnn * pva_pre.att.cbn * d_vfb;
-
-    // 重新计算重力、哥式积分项
-    gl << 0, 0, GRS80_g(midpos);
-    d_vgn = (gl - (2 * wie_n + wen_n).cross(midvel)) * imu_cur.dt;
-
-    // 速度更新完成
-    pva_cur.vel = pva_pre.vel + d_vfn + d_vgn;
-}
-
-void posUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur) {
-
-    Eigen::Vector3d temp1, temp2, midvel, midpos;
-    Eigen::Quaterniond qne, qee, qnn;
-
-    // 重新计算中间时刻的速度和位置
-    midvel = (pva_cur.vel + pva_pre.vel) / 2;
-    midpos = pva_pre.pos + DRi(pva_pre.pos) * midvel * imu_cur.dt / 2;
-
-    // 重新计算中间时刻地理参数
-    Eigen::Vector2d rmrn;
-    Eigen::Vector3d wie_n, wen_n;
-    rmrn << Cal_RM(midpos[0]), Cal_RN(midpos[0]);
-    wie_n << OMEGA_E * cos(midpos[0]), 0, -OMEGA_E * sin(midpos[0]);
-    wen_n << midvel[1] / (rmrn[1] + midpos[2]), -midvel[0] / (rmrn[0] + midpos[2]),
-        -midvel[1] * tan(midpos[0]) / (rmrn[1] + midpos[2]);
-
-    // 重新计算 k时刻到k-1时刻 n系旋转矢量
-    temp1 = (wie_n + wen_n) * imu_cur.dt;
-    qnn = Phi2q(temp1);
-    // e系转动等效旋转矢量 (k-1时刻k时刻，所以取负号)
-    temp2 << 0, 0, -OMEGA_E * imu_cur.dt;
-    qee = Phi2q(temp2);
-
-    // 位置更新完成
-    qne = q_n2e(pva_pre.pos);
-    qne = qee * qne * qnn;
-    pva_cur.pos[2] = pva_pre.pos[2] - midvel[2] * imu_cur.dt;
-    pva_cur.pos = q_n2e_2_blh(qne, pva_cur.pos[2]);
 }
 
 void attUpdate(const PVA& pvapre, PVA& pvacur, const IMU& imupre, const IMU& imucur) {
 
-    Eigen::Quaterniond qne_pre, qne_cur, qne_mid, qnn, qbb;
-    Eigen::Vector3d temp1, midpos, midvel;
+    Eigen::Quaterniond q_theta, q_omega;
 
-    // 重新计算中间时刻的速度和位置
-    midvel = (pvapre.vel + pvacur.vel) / 2;
-    qne_pre = q_n2e(pvapre.pos);
-    qne_cur = q_n2e(pvacur.pos);
-    temp1 = q2Phi(qne_cur.inverse() * qne_pre);
-    qne_mid = qne_pre * Phi2q(temp1 / 2).inverse();
-    midpos[2] = (pvacur.pos[2] + pvapre.pos[2]) / 2;
-    midpos = q_n2e_2_blh(qne_mid, midpos[2]);
-
-    // 重新计算中间时刻地理参数
-    Eigen::Vector2d rmrn;
-    Eigen::Vector3d wie_n, wen_n;
-    rmrn << Cal_RM(midpos[0]), Cal_RN(midpos[0]);
-    wie_n << OMEGA_E * cos(midpos[0]), 0, -OMEGA_E * sin(midpos[0]);
-    wen_n << midvel[1] / (rmrn[1] + midpos[2]), -midvel[0] / (rmrn[0] + midpos[2]),
-        -midvel[1] * tan(midpos[0]) / (rmrn[1] + midpos[2]);
-
-    // 计算n系的旋转四元数 k-1时刻到k时刻变换
-    temp1 = -(wie_n + wen_n) * imucur.dt;
-    qnn = Phi2q(temp1);
-
-    // 计算b系旋转四元数 补偿二阶圆锥误差
-    temp1 = imucur.dtheta + imupre.dtheta.cross(imucur.dtheta) / 12;
-    qbb = Phi2q(temp1);
-
+    q_theta = Phi2q(-imucur.dtheta);
+    q_omega = Phi2q(Eigen::Vector3d(0, 0, OMEGA_E * imucur.dt));
     // 姿态更新完成
-    pvacur.att.qbn = qnn * pvapre.att.qbn * qbb;
-    pvacur.att.cbn = q2C(pvacur.att.qbn);
-    pvacur.att.euler = C2Euler(pvacur.att.cbn);
+    pvacur.att.qbe = q_theta * pvapre.att.qbe * q_omega;
+    pvacur.att.cbe = q2C(pvacur.att.qbe);
+    pvacur.att.euler = C2Euler(pvacur.att.cbe);
+}
+
+void velUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur) {
+
+    Eigen::Vector3d d_theta_v, d_vfe, d_vge;
+
+    Eigen::Vector3d wie_e, wen_b;
+    wie_e << 0, 0, OMEGA_E;
+    wen_b << pva_cur.att.cbe.transpose() * wie_e;
+    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pva_pre.pos), WGS84_e2, WGS84_a));
+    blh[0] *= DEG2RAD;
+    blh[1] *= DEG2RAD;
+    Eigen::Vector3d gravity_e = g_e(blh);
+
+    // 地球自转角速度增量
+    d_theta_v = imu_cur.dtheta - wen_b * imu_cur.dt;
+
+    // 比例积分项
+    d_vfe = pva_cur.att.cbe * (imu_cur.dvel - 0.5 * Skew(d_theta_v) * imu_cur.dvel);
+
+    // 重力/科氏力补偿
+    d_vge = (gravity_e - 2 * Skew(wie_e) * pva_pre.vel) * imu_cur.dt;
+
+    // 速度更新完成
+    pva_cur.vel = pva_pre.vel + d_vfe + d_vge;
+}
+
+void posUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur)
+{
+    pva_cur.pos = pva_pre.pos + 0.5 * (pva_pre.vel + pva_cur.vel) * imu_cur.dt;
 }

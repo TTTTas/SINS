@@ -26,8 +26,8 @@ typedef struct IMU {
 } IMU;
 
 typedef struct Attitude {
-    Eigen::Quaterniond qbn;
-    Eigen::Matrix3d cbn;
+    Eigen::Quaterniond qbe;
+    Eigen::Matrix3d cbe;
     Eigen::Vector3d euler;
 } Attitude;
 
@@ -40,8 +40,6 @@ typedef struct PVA {
 typedef struct ImuError {
     Eigen::Vector3d gyrbias;
     Eigen::Vector3d accbias;
-    Eigen::Vector3d gyrscale;
-    Eigen::Vector3d accscale;
 } ImuError;
 
 typedef struct NavState {
@@ -57,8 +55,6 @@ typedef struct ImuNoise {
     Eigen::Vector3d acc_vrw;
     Eigen::Vector3d gyrbias_std;
     Eigen::Vector3d accbias_std;
-    Eigen::Vector3d gyrscale_std;
-    Eigen::Vector3d accscale_std;
     double corr_time;
 } ImuNoise;
 
@@ -89,10 +85,6 @@ typedef struct GINSOptions {
             << " [deg/h] " << std::endl;
         std::cout << '\t' << "- initial accbias : " << initstate.imuerror.accbias.transpose() * 1e5 << " [mGal] "
             << std::endl;
-        std::cout << '\t' << "- initial gyrscale: " << initstate.imuerror.gyrscale.transpose() * 1e6 << " [ppm] "
-            << std::endl;
-        std::cout << '\t' << "- initial accscale: " << initstate.imuerror.accscale.transpose() * 1e6 << " [ppm] "
-            << std::endl;
 
         // 打印初始状态标准差
         std::cout << " - Initial State STD: " << std::endl;
@@ -104,10 +96,6 @@ typedef struct GINSOptions {
             << " [deg/h] " << std::endl;
         std::cout << '\t' << "- initial accbias std: " << initstate_std.imuerror.accbias.transpose() * 1e5 << " [mGal] "
             << std::endl;
-        std::cout << '\t' << "- initial gyrscale std: " << initstate_std.imuerror.gyrscale.transpose() * 1e6
-            << " [ppm] " << std::endl;
-        std::cout << '\t' << "- initial accscale std: " << initstate_std.imuerror.accscale.transpose() * 1e6
-            << " [ppm] " << std::endl;
 
         // 打印IMU噪声参数
         std::cout << " - IMU noise: " << std::endl;
@@ -116,8 +104,6 @@ typedef struct GINSOptions {
         std::cout << '\t' << "- gyrbias  std: " << imunoise.gyrbias_std.transpose() * RAD2DEG * 3600 << " [deg/h] "
             << std::endl;
         std::cout << '\t' << "- accbias  std: " << imunoise.accbias_std.transpose() * 1e5 << " [mGal] " << std::endl;
-        std::cout << '\t' << "- gyrscale std: " << imunoise.gyrscale_std.transpose() * 1e6 << " [ppm] " << std::endl;
-        std::cout << '\t' << "- accscale std: " << imunoise.accscale_std.transpose() * 1e6 << " [ppm] " << std::endl;
         std::cout << '\t' << "- correlation time: " << imunoise.corr_time / 3600.0 << " [h] " << std::endl;
 
         // 打印GNSS天线杆臂

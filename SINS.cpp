@@ -133,7 +133,6 @@ int main()
     stdfile.close();
 
     // 处理完毕
-    // process finish
     auto te = absl::Now();
     std::cout << std::endl << std::endl << "KF-GINS Process Finish! ";
     std::cout << "From " << starttime << " s to " << endtime << " s, total " << interval << " s!" << std::endl;
@@ -152,12 +151,11 @@ void writeNavResult(double time, NavState& navstate, FileSaver& navfile, FileSav
     std::vector<double> result;
 
     // 保存导航结果
-    // save navigation result
     result.clear();
     result.push_back(0);
     result.push_back(time);
-    result.push_back(navstate.pos[0] * RAD2DEG);
-    result.push_back(navstate.pos[1] * RAD2DEG);
+    result.push_back(navstate.pos[0]);
+    result.push_back(navstate.pos[1]);
     result.push_back(navstate.pos[2]);
     result.push_back(navstate.vel[0]);
     result.push_back(navstate.vel[1]);
@@ -168,7 +166,6 @@ void writeNavResult(double time, NavState& navstate, FileSaver& navfile, FileSav
     navfile.dump(result);
 
     // 保存IMU误差
-    // save IMU error
     auto imuerr = navstate.imuerror;
     result.clear();
     result.push_back(time);
@@ -178,12 +175,6 @@ void writeNavResult(double time, NavState& navstate, FileSaver& navfile, FileSav
     result.push_back(imuerr.accbias[0] * 1e5);
     result.push_back(imuerr.accbias[1] * 1e5);
     result.push_back(imuerr.accbias[2] * 1e5);
-    result.push_back(imuerr.gyrscale[0] * 1e6);
-    result.push_back(imuerr.gyrscale[1] * 1e6);
-    result.push_back(imuerr.gyrscale[2] * 1e6);
-    result.push_back(imuerr.accscale[0] * 1e6);
-    result.push_back(imuerr.accscale[1] * 1e6);
-    result.push_back(imuerr.accscale[2] * 1e6);
     imuerrfile.dump(result);
 }
 
@@ -197,7 +188,6 @@ void writeSTD(double time, Eigen::MatrixXd& cov, FileSaver& stdfile) {
     result.clear();
     result.push_back(time);
     // 保存位置、速度、姿态标准差
-    // save position, velocity and attitude std
     for (int i = 0; i < 6; i++) {
         result.push_back(sqrt(cov(i, i)));
     }
@@ -206,15 +196,11 @@ void writeSTD(double time, Eigen::MatrixXd& cov, FileSaver& stdfile) {
     }
 
     // 保存IMU误差标准差
-    // save imu error std
     for (int i = 9; i < 12; i++) {
         result.push_back(sqrt(cov(i, i)) * RAD2DEG * 3600);
     }
     for (int i = 12; i < 15; i++) {
         result.push_back(sqrt(cov(i, i)) * 1e5);
-    }
-    for (int i = 15; i < 21; i++) {
-        result.push_back(sqrt(cov(i, i)) * 1e6);
     }
     stdfile.dump(result);
 }

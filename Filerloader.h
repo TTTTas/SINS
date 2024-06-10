@@ -24,7 +24,7 @@ public:
 
         string line;
         getline(filefp_, line);
-        imu_ = read_line_imu_txt(line);
+        imu_ = read_line_imu(line);
 
         double dt = imu_.time - imu_pre_.time;
         if (dt < 0.1) {
@@ -44,7 +44,7 @@ public:
         filefp_.seekg(0, std::ios_base::beg);
         string line;
         getline(filefp_, line);
-        starttime = read_line_imu_txt(line).time;
+        starttime = read_line_imu(line).time;
         filefp_.seekg(sp, std::ios_base::beg);
         return starttime;
     }
@@ -64,7 +64,7 @@ public:
         } while (byte != '\n');
         string line;
         getline(filefp_, line);
-        endtime = read_line_imu_txt(line).time;
+        endtime = read_line_imu(line).time;
         filefp_.seekg(sp, std::ios_base::beg);
         return endtime;
     }
@@ -108,7 +108,7 @@ public:
         gnss_.isvalid = true;
         if (data.size() == 7)
         {
-            gnss_.blh << deg2rad(data[1]), deg2rad(data[2]), data[3];
+            gnss_.blh << data[1], data[2], data[3];
             gnss_.std << data[4], data[4], data[5];
             gnss_.vel << 0, 0, 0;
             gnss_.vel_std << 0, 0, 0;

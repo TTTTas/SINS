@@ -26,7 +26,9 @@ Eigen::Vector3d Extrapol(const Eigen::Vector3d& v0, const Eigen::Vector3d& v1);
 Eigen::Matrix3d SQR_Mat(Eigen::Vector3d v);
 
 // Function to calculate the local gravity value
- double GRS80_g(const Eigen::Vector3d& pos);
+double GRS80_g(const Eigen::Vector3d& pos);
+
+Eigen::Vector3d g_e(Eigen::Vector3d pos);
 
 // Function to calculate the meridian radius
  double Cal_RM(double B);
