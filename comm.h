@@ -51,6 +51,8 @@ Eigen::Vector3d q2Phi(const Eigen::Quaterniond& q);
 // Function to convert equivalent rotation vector to rotation matrix
 Eigen::Matrix3d Phi2C(const Eigen::Vector3d& Phi);
 
+Eigen::Vector3d C2Phi(const Eigen::Matrix3d& C);
+
 // Function to convert equivalent rotation vector to quaternion
 Eigen::Quaterniond Phi2q(const Eigen::Vector3d& Phi);
 
@@ -62,21 +64,3 @@ Eigen::Matrix3d Euler2C(const Eigen::Vector3d& Euler);
 
 // Function to convert Euler angles to quaternion
 Eigen::Quaterniond Euler2q(const Eigen::Vector3d& Euler);
-
-/* n系(导航坐标系)到e系(地心地固坐标系)转换四元数 */
-Eigen::Quaterniond q_n2e(const Eigen::Vector3d& blh);
-
-/* 从n系到e系转换四元数得到纬度和经度 */
-Eigen::Vector3d q_n2e_2_blh(const Eigen::Quaterniond& qne, double height);
-
-/* n系相对位置转大地坐标相对位置 */
-Eigen::Matrix3d DRi(const Eigen::Vector3d& blh);
-
-/* 大地坐标相对位置转n系相对位置 */
-Eigen::Matrix3d DR(const Eigen::Vector3d& blh);
-
-// Function to update Euler angles to quaternion
-Eigen::Quaterniond Update_Euler_q(const Eigen::Vector3d& E, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& pos, const Eigen::Vector3d& v, double dt);
-
-// Function to convert BLH to NE 
-std::vector<Eigen::Vector2d> BLH2NE(const std::vector<Eigen::Vector3d>& BLH, const Eigen::Vector3d& BLH0);

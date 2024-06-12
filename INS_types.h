@@ -26,8 +26,8 @@ typedef struct IMU {
 } IMU;
 
 typedef struct Attitude {
-    Eigen::Quaterniond qbe;
-    Eigen::Matrix3d cbe;
+    Eigen::Quaterniond qbn;
+    Eigen::Matrix3d cbn;
     Eigen::Vector3d euler;
 } Attitude;
 
@@ -51,6 +51,7 @@ typedef struct NavState {
 } NavState;
 
 typedef struct ImuNoise {
+    Eigen::Vector3d pos_prw;
     Eigen::Vector3d gyr_arw;
     Eigen::Vector3d acc_vrw;
     Eigen::Vector3d gyrbias_std;

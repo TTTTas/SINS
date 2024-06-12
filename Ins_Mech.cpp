@@ -75,35 +75,43 @@ void insMech(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& im
     posUpdate(pva_pre, pva_cur, imu_pre, imu_cur);
 }
 
-void attUpdate(const PVA& pvapre, PVA& pvacur, const IMU& imupre, const IMU& imucur) {
+void attUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imupre, const IMU& imucur) {
 
-    Eigen::Quaterniond q_theta, q_omega;
+    Eigen::Matrix3d R_theta, R_omega;
+    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pva_pre.pos), WGS84_e2, WGS84_a));
+    blh[0] *= DEG2RAD;
+    blh[1] *= DEG2RAD;
+    Matrix3d R_eb_pre = pva_pre.att.cbn * get_Rot(blh[0], blh[1]);
 
-    q_theta = Phi2q(-imucur.dtheta);
-    q_omega = Phi2q(Eigen::Vector3d(0, 0, OMEGA_E * imucur.dt));
+    R_theta = Phi2C(-imucur.dtheta);
+    R_omega = Phi2C(Eigen::Vector3d(0, 0, OMEGA_E * imucur.dt));
+
+    Matrix3d R_eb_cur = R_theta * R_eb_pre * R_omega;
+    
     // 姿态更新完成
-    pvacur.att.qbe = q_theta * pvapre.att.qbe * q_omega;
-    pvacur.att.cbe = q2C(pvacur.att.qbe);
-    pvacur.att.euler = C2Euler(pvacur.att.cbe);
+    pva_cur.att.cbn = R_eb_cur * get_Rot(blh[0], blh[1]).transpose();
+    pva_cur.att.qbn = C2q(pva_cur.att.cbn);
+    pva_cur.att.euler = C2Euler(pva_cur.att.cbn);
 }
 
 void velUpdate(const PVA& pva_pre, PVA& pva_cur, const IMU& imu_pre, const IMU& imu_cur) {
 
     Eigen::Vector3d d_theta_v, d_vfe, d_vge;
-
     Eigen::Vector3d wie_e, wen_b;
-    wie_e << 0, 0, OMEGA_E;
-    wen_b << pva_cur.att.cbe.transpose() * wie_e;
     Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pva_pre.pos), WGS84_e2, WGS84_a));
     blh[0] *= DEG2RAD;
     blh[1] *= DEG2RAD;
+    wie_e << 0, 0, OMEGA_E;
+    Matrix3d R_be = get_Rot(blh[0], blh[1]).transpose() * pva_cur.att.cbn.transpose();
+    wen_b << R_be.transpose() * wie_e;
+
     Eigen::Vector3d gravity_e = g_e(blh);
 
     // 地球自转角速度增量
     d_theta_v = imu_cur.dtheta - wen_b * imu_cur.dt;
 
     // 比例积分项
-    d_vfe = pva_cur.att.cbe * (imu_cur.dvel - 0.5 * Skew(d_theta_v) * imu_cur.dvel);
+    d_vfe = R_be * (imu_cur.dvel - 0.5 * Skew(d_theta_v) * imu_cur.dvel);
 
     // 重力/科氏力补偿
     d_vge = (gravity_e - 2 * Skew(wie_e) * pva_pre.vel) * imu_cur.dt;

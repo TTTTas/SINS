@@ -16,16 +16,15 @@ INS_Eigen::INS_Eigen(GINSOptions& options)
 
     // 设置协方差矩阵，系统噪声阵和系统误差状态矩阵大小
     MatrixXd Cov_=MatrixXd::Zero(RANK, RANK);
-    Qc = MatrixXd::Zero(NOISERANK, NOISERANK);
+    Qc = MatrixXd::Zero(RANK, RANK);
 
     // 初始化系统噪声阵
     auto imunoise = options_.imunoise;
-    Qc.block(ARW_ID, ARW_ID, 3, 3) = imunoise.gyr_arw.cwiseProduct(imunoise.gyr_arw).asDiagonal();
-    Qc.block(VRW_ID, VRW_ID, 3, 3) = imunoise.acc_vrw.cwiseProduct(imunoise.acc_vrw).asDiagonal();
-    Qc.block(BGSTD_ID, BGSTD_ID, 3, 3) =
-        2 / imunoise.corr_time * imunoise.gyrbias_std.cwiseProduct(imunoise.gyrbias_std).asDiagonal();
-    Qc.block(BASTD_ID, BASTD_ID, 3, 3) =
-        2 / imunoise.corr_time * imunoise.accbias_std.cwiseProduct(imunoise.accbias_std).asDiagonal();
+    Qc.block(P_ID, P_ID, 3, 3) = imunoise.pos_prw.cwiseProduct(imunoise.pos_prw).asDiagonal();
+    Qc.block(PHI_ID, PHI_ID, 3, 3) = imunoise.gyr_arw.cwiseProduct(imunoise.gyr_arw).asDiagonal();
+    Qc.block(V_ID, V_ID, 3, 3) = imunoise.acc_vrw.cwiseProduct(imunoise.acc_vrw).asDiagonal();
+    Qc.block(BG_ID, BG_ID, 3, 3) = imunoise.gyrbias_std.cwiseProduct(imunoise.gyrbias_std).asDiagonal();
+    Qc.block(BA_ID, BA_ID, 3, 3) = imunoise.accbias_std.cwiseProduct(imunoise.accbias_std).asDiagonal();
 
 
     // 设置系统状态(位置、速度、姿态和IMU误差)初值和初始协方差
@@ -33,11 +32,8 @@ INS_Eigen::INS_Eigen(GINSOptions& options)
     pvacur_.pos = options.initstate.pos;
     pvacur_.vel = options.initstate.vel;
     pvacur_.att.euler = options.initstate.euler;
-    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pvacur_.pos), WGS84_e2, WGS84_a));
-    blh[0] *= DEG2RAD;
-    blh[1] *= DEG2RAD;
-    pvacur_.att.cbe =  get_Rot(blh[0],blh[1]) * Euler2C(pvacur_.att.euler);
-    pvacur_.att.qbe = C2q(pvacur_.att.cbe);
+    pvacur_.att.cbn = Euler2C(pvacur_.att.euler);
+    pvacur_.att.qbn = C2q(pvacur_.att.cbn);
     // 初始化IMU误差
     imuerror_ = options.initstate.imuerror;
 
@@ -175,14 +171,17 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     Qd.setZero();
     G.setZero();
 
-    // 使用上一历元状态计算状态转移矩阵
-    Eigen::Vector3d wie_e, wen_b;
-    wie_e << 0, 0, OMEGA_E;
-    wen_b << pvapre_.att.cbe.transpose() * wie_e;
-    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pvapre_.pos), WGS84_e2, WGS84_a));
+    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pvacur_.pos), WGS84_e2, WGS84_a));
     blh[0] *= DEG2RAD;
     blh[1] *= DEG2RAD;
     Eigen::Vector3d gravity_e = g_e(blh);
+
+    // 使用上一历元状态计算状态转移矩阵
+    Eigen::Vector3d wie_e, wen_b;
+    wie_e << 0, 0, OMEGA_E;
+    Matrix3d R_be = get_Rot(blh[0], blh[1]).transpose() * pvacur_.att.cbn.transpose();
+    wen_b << R_be.transpose() * wie_e;
+    
 
     Eigen::Matrix3d temp;
     Eigen::Vector3d accel, omega;
@@ -192,27 +191,24 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     F.block(P_ID, V_ID, 3, 3) = Eigen::Matrix3d::Identity();
 
     // 速度误差
-    F.block(V_ID, V_ID, 3, 3) = -2*Skew(wie_e) + pvapre_.att.cbe*options_.imunoise.acc_vrw.asDiagonal()* pvapre_.att.cbe.transpose();
-    F.block(V_ID, PHI_ID, 3, 3) = Skew(pvapre_.att.cbe * accel);
-    F.block(V_ID, BA_ID, 3, 3) = pvapre_.att.cbe;
+    F.block(V_ID, V_ID, 3, 3) = -2 * Skew(wie_e);
+    F.block(V_ID, PHI_ID, 3, 3) = Skew(R_be * accel);
+    F.block(V_ID, BA_ID, 3, 3) = R_be;
 
     // 姿态误差
-    F.block(PHI_ID, PHI_ID, 3, 3) = -Skew(wie_e)+ pvapre_.att.cbe * options_.imunoise.gyr_arw.asDiagonal() * pvapre_.att.cbe.transpose();
-    F.block(PHI_ID, BG_ID, 3, 3) = -pvapre_.att.cbe;
+    F.block(PHI_ID, PHI_ID, 3, 3) = -Skew(wie_e);
+    F.block(PHI_ID, BG_ID, 3, 3) = -R_be;
 
     // 系统噪声驱动矩阵
-    G.block(V_ID, VRW_ID, 3, 3) = pvapre_.att.cbe;
-    G.block(PHI_ID, ARW_ID, 3, 3) = pvapre_.att.cbe;
-    G.block(BG_ID, BGSTD_ID, 3, 3) = Eigen::Matrix3d::Identity();
-    G.block(BA_ID, BASTD_ID, 3, 3) = Eigen::Matrix3d::Identity();
+    Qc.block(V_ID, V_ID, 3, 3) = R_be * options_.imunoise.acc_vrw.cwiseProduct(options_.imunoise.acc_vrw).asDiagonal() * R_be.transpose();
+    Qc.block(ARW_ID,ARW_ID,3,3) = R_be * options_.imunoise.gyr_arw.cwiseProduct(options_.imunoise.gyr_arw).asDiagonal() * R_be.transpose();
 
     // 状态转移矩阵
     Phi.setIdentity();
     Phi = Phi + F * imucur.dt;
 
     // 计算系统传播噪声
-    Qd = G * Qc * G.transpose() * imucur.dt;
-    Qd = (Phi * Qd * Phi.transpose() + Qd) * imucur.dt / 2;
+    Qd = (Phi * Qc * Phi.transpose() + Qc) * imucur.dt / 2;
 
     // EKF预测传播系统协方差和系统误差状态
     kf_->set_A(Phi);
@@ -220,11 +216,17 @@ void INS_Eigen::insPropagation(IMU& imupre, IMU& imucur)
     kf_->predict();
 }
 
+// GNSS位置测量新息
 void INS_Eigen::gnssUpdate(GNSS& gnssdata)
-    // GNSS位置测量新息
 {
+    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pvacur_.pos), WGS84_e2, WGS84_a));
+    blh[0] *= DEG2RAD;
+    blh[1] *= DEG2RAD;
+    Matrix3d R_be = get_Rot(blh[0], blh[1]).transpose() * pvacur_.att.cbn.transpose();
+
+    // 使用上一历元状态计算状态转移矩阵
     // IMU位置转到GNSS天线相位中心位置
-    Eigen::Vector3d antenna_pos = pvacur_.pos + pvacur_.att.cbe * options_.antlever;
+    Eigen::Vector3d antenna_pos = pvacur_.pos + R_be * options_.antlever;
 
     Eigen::MatrixXd dz;
     dz = antenna_pos - gnssdata.blh;
@@ -235,7 +237,7 @@ void INS_Eigen::gnssUpdate(GNSS& gnssdata)
     H_gnsspos.resize(3, kf_->Q_.rows());
     H_gnsspos.setZero();
     H_gnsspos.block(0, P_ID, 3, 3) = Eigen::Matrix3d::Identity();
-    H_gnsspos.block(0, PHI_ID, 3, 3) = Skew(pvacur_.att.cbe * options_.antlever);
+    H_gnsspos.block(0, PHI_ID, 3, 3) = Skew(R_be * options_.antlever);
 
     // 位置观测噪声阵
     Eigen::MatrixXd R_gnsspos;
@@ -265,10 +267,14 @@ void INS_Eigen::stateFeedback()
 
     // 姿态误差反馈
     vectemp = kf_->x_hat_.block(PHI_ID, 0, 3, 1);
-    Eigen::Quaterniond qpn = Phi2q(vectemp);
-    pvacur_.att.qbe = qpn * pvacur_.att.qbe;
-    pvacur_.att.cbe = q2C(pvacur_.att.qbe);
-    pvacur_.att.euler = C2Euler(pvacur_.att.cbe);
+    Eigen::Vector3d blh = get_BLH(XYZ2BLH(get_XYZ(pvacur_.pos), WGS84_e2, WGS84_a));
+    blh[0] *= DEG2RAD;
+    blh[1] *= DEG2RAD;
+    Matrix3d R_be = get_Rot(blh[0], blh[1]).transpose() * pvacur_.att.cbn.transpose();
+    R_be = (Matrix3d::Identity(3, 3) + Skew(vectemp)) * R_be;
+    pvacur_.att.cbn = R_be.transpose() * get_Rot(blh[0], blh[1]).transpose();
+    pvacur_.att.qbn = C2q(pvacur_.att.cbn);
+    pvacur_.att.euler = C2Euler(pvacur_.att.cbn);
 
     // IMU零偏误差反馈
     vectemp = kf_->x_hat_.block(BG_ID, 0, 3, 1);

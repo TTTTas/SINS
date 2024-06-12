@@ -79,16 +79,80 @@ Eigen::Vector3d g_e(Eigen::Vector3d pos)
 
 // Function to convert rotation matrix to quaternion
 Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
-    return Eigen::Quaterniond(C);
+    double tr = C.trace();
+    double p1, p2, p3, p4;
+    p1 = 1 + tr;
+    p2 = 1 + 2 * C(0, 0) - tr;
+    p3 = 1 + 2 * C(1, 1) - tr;
+    p4 = 1 + 2 * C(2, 2) - tr;
+    double q1, q2, q3, q4;
+
+    if (p1 >= p2 && p1 >= p3 && p1 >= p4)
+    {
+        /// p1 = max(p1, p2, p3, p4)
+        q1 = 0.5 * sqrt(p1);
+        q2 = (C(1, 2) - C(2, 1)) / (4 * q1);
+        q3 = (C(2, 0) - C(0, 2)) / (4 * q1);
+        q4 = (C(0, 1) - C(1, 0)) / (4 * q1);
+    }
+    else if (p2 >= p1 && p2 >= p3 && p2 >= p4)
+    {
+        /// p2 = max(p1, p2, p3, p4)
+        q2 = 0.5 * sqrt(p2);
+        q1 = (C(1, 2) - C(2, 1)) / (4 * q2);
+        q3 = (C(0, 1) + C(1, 0)) / (4 * q2);
+        q4 = (C(0, 2) + C(2, 0)) / (4 * q2);
+    }
+    else if (p3 >= p1 && p3 >= p2 && p3 >= p4)
+    {
+        /// p3 = max(p1, p2, p3, p4)
+        q3 = 0.5 * sqrt(p3);
+        q1 = (C(2, 0) - C(0, 2)) / (4 * q3);
+        q2 = (C(0, 1) + C(1, 0)) / (4 * q3);
+        q4 = (C(1, 2) + C(2, 1)) / (4 * q3);
+    }
+    else
+    {
+        /// p4 = max(p1, p2, p3, p4)
+        q4 = 0.5 * sqrt(p4);
+        q1 = (C(0, 1) - C(1, 0)) / (4 * q4);
+        q2 = (C(2, 0) + C(0, 2)) / (4 * q4);
+        q3 = (C(1, 2) + C(2, 1)) / (4 * q4);
+    }
+
+    if (q1 < 0)
+    {
+        q1 *= -1;
+        q2 *= -1;
+        q3 *= -1;
+        q4 *= -1;
+    }
+    return Eigen::Quaterniond(q1, q2, q3, q4);
 }
 
 // Function to convert quaternion to rotation matrix
  Eigen::Matrix3d q2C(const Eigen::Quaterniond& q) {
-    return q.toRotationMatrix();
+     double q0, q1, q2, q3;
+     q0 = q.w();
+     q1 = q.x();
+     q2 = q.y();
+     q3 = q.z();
+
+     Eigen::MatrixX3d M = Eigen::Matrix3d::Zero(3, 3);
+     M(0, 0) = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
+     M(0, 1) = 2 * (q1 * q2 + q0 * q3);
+     M(0, 2) = 2 * (q1 * q3 - q0 * q2);
+     M(1, 0) = 2 * (q1 * q2 - q0 * q3);
+     M(1, 1) = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
+     M(1, 2) = 2 * (q2 * q3 + q0 * q1);
+     M(2, 0) = 2 * (q1 * q3 + q0 * q2);
+     M(2, 1) = 2 * (q2 * q3 - q0 * q1);
+     M(2, 2) = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+     return M;
 }
 
 // Function to convert quaternion to equivalent rotation vector
- Eigen::Vector3d q2Phi(const Eigen::Quaterniond& q) {
+Eigen::Vector3d q2Phi(const Eigen::Quaterniond& q) {
      Eigen::AngleAxisd angleAxis(q);
     double angle = angleAxis.angle();
     Eigen::Vector3d axis = angleAxis.axis();
@@ -101,6 +165,11 @@ Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
     Eigen::Matrix3d C = Eigen::Matrix3d::Identity() + sin(n_phi) / n_phi * Skew(Phi) +
         (1 - cos(n_phi)) / (n_phi * n_phi) * Skew(Phi) * Skew(Phi);
     return C;
+}
+
+Eigen::Vector3d C2Phi(const Eigen::Matrix3d& C)
+{
+    return (q2Phi(C2q(C)));
 }
 
 // Function to convert equivalent rotation vector to quaternion
@@ -118,9 +187,9 @@ Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
  Eigen::Vector3d C2Euler(const Eigen::Matrix3d& C) {
     Eigen::Vector3d Euler;
     if (abs(C(2, 0)) < 0.999) {
-        Euler(1) = atan(-C(2, 0) / sqrt(C(2, 1) * C(2, 1) + C(2, 2) * C(2, 2)));  // pitch
-        Euler(0) = atan2(C(2, 1), C(2, 2));  // roll
-        Euler(2) = atan2(C(1, 0), C(0, 0));  // yaw
+        Euler(1) = asin(C(1,2));  // pitch
+        Euler(0) = atan2(-C(0, 2), C(2, 2));  // roll
+        Euler(2) = atan2(C(1, 0), C(1, 1));  // yaw
     }
     else {
         Euler << -1, -1, -1;
@@ -133,108 +202,14 @@ Eigen::Quaterniond C2q(const Eigen::Matrix3d& C) {
 
 // Function to convert Euler angles to a rotation matrix
 Eigen::Matrix3d Euler2C(const Eigen::Vector3d& euler) {
-    return Eigen::Matrix3d(Eigen::AngleAxisd(euler[2], Eigen::Vector3d::UnitZ()) *
-        Eigen::AngleAxisd(euler[1], Eigen::Vector3d::UnitY()) *
-        Eigen::AngleAxisd(euler[0], Eigen::Vector3d::UnitX()));
-}
+    Eigen::Matrix3d C;
+    C << cos(euler(2)) * cos(euler(0)) + sin(euler(2)) * sin(euler(1)) * sin(euler(0)), -sin(euler(2)) * cos(euler(0)) + cos(euler(2)) * sin(euler(1)) * sin(euler(0)), -sin(euler(0)) * cos(euler(1))
+        , sin(euler(2))* cos(euler(1)), cos(euler(2))* cos(euler(1)), sin(euler(1))
+        , cos(euler(2))* sin(euler(0)) - sin(euler(2)) * cos(euler(0)) * sin(euler(1)), -sin(euler(2)) * sin(euler(0)) - cos(euler(2)) * cos(euler(0)) * sin(euler(1)), cos(euler(1))* cos(euler(0));
+    return C;
+ }
 
 // Function to convert Euler angles to quaternion
-Eigen::Quaterniond Euler2q(const Eigen::Vector3d& Euler) {
-    Eigen::AngleAxisd rollAngle(Euler(0), Eigen::Vector3d::UnitX());
-    Eigen::AngleAxisd pitchAngle(Euler(1), Eigen::Vector3d::UnitY());
-    Eigen::AngleAxisd yawAngle(Euler(2), Eigen::Vector3d::UnitZ());
-    Eigen::Quaterniond q = rollAngle * pitchAngle * yawAngle;
-    return q;
-}
-
-Eigen::Quaterniond q_n2e(const Eigen::Vector3d& blh)
-{
-	Eigen::Quaterniond quat;
-
-	double coslon, sinlon, coslat, sinlat;
-
-	coslon = cos(blh[1] * 0.5);
-	sinlon = sin(blh[1] * 0.5);
-	coslat = cos(-M_PI * 0.25 - blh[0] * 0.5);
-	sinlat = sin(-M_PI * 0.25 - blh[0] * 0.5);
-
-	quat.w() = coslat * coslon;
-	quat.x() = -sinlat * sinlon;
-	quat.y() = sinlat * coslon;
-	quat.z() = coslat * sinlon;
-
-	return quat;
-}
-
-Eigen::Vector3d q_n2e_2_blh(const Eigen::Quaterniond& qne, double height)
-{
-	return { -2 * atan(qne.y() / qne.w()) - M_PI * 0.5, 2 * atan2(qne.z(), qne.w()), height };
-}
-
-Eigen::Matrix3d DRi(const Eigen::Vector3d& blh)
-{
-	Eigen::Matrix3d dri = Eigen::Matrix3d::Zero();
-
-    Eigen::Vector2d rmn;
-    rmn << Cal_RM(blh[0]), Cal_RN(blh[0]);
-
-	dri(0, 0) = 1.0 / (rmn[0] + blh[2]);
-	dri(1, 1) = 1.0 / ((rmn[1] + blh[2]) * cos(blh[0]));
-	dri(2, 2) = -1;
-	return dri;
-}
-
-Eigen::Matrix3d DR(const Eigen::Vector3d& blh)
-{
-	Eigen::Matrix3d dr = Eigen::Matrix3d::Zero();
-
-    Eigen::Vector2d rmn;
-    rmn << Cal_RM(blh[0]), Cal_RN(blh[0]);
-
-	dr(0, 0) = rmn[0] + blh[2];
-	dr(1, 1) = (rmn[1] + blh[2]) * cos(blh[0]);
-	dr(2, 2) = -1;
-	return dr;
-}
-
-// Function to update Euler angles to quaternion
-Eigen::Quaterniond Update_Euler_q(const Eigen::Vector3d& E, const Eigen::Vector3d& theta0, const Eigen::Vector3d& theta1, const Eigen::Vector3d& pos, const Eigen::Vector3d& v, double dt) {
-    double omiga_e = 7.292115e-5;
-    double B = pos(0); // Convert degrees to radians
-
-    Eigen::Vector3d omiga_ie;
-    omiga_ie << omiga_e * cos(B), 0, -omiga_e * sin(B);
-
-    Eigen::Vector3d omiga_en;
-    omiga_en << v(1) / (Cal_RN(B) + pos(2)),
-        -v(0) / (Cal_RM(B) + pos(2)),
-        -v(1) * tan(B) / (Cal_RN(B) + pos(2));
-
-    Eigen::Vector3d phi_k = theta1 + theta0.cross(theta1) / 12.0;
-    Eigen::Vector3d zeta = (omiga_en + omiga_ie) * dt;
-
-    Eigen::Quaterniond q_bb = Phi2q(phi_k);
-    Eigen::Quaterniond q_nn = Phi2q(zeta).conjugate();
-    Eigen::Quaterniond q0 = Euler2q(E);
-
-    return (q_nn * q0) * q_bb;
-}
-
-// Function to convert BLH to NE coordinates
-std::vector<Eigen::Vector2d> BLH2NE(const std::vector<Eigen::Vector3d>& BLH, const Eigen::Vector3d& BLH0) {
-    double B = BLH0(0);
-    double L = BLH0(1);
-    double h = BLH0(2);
-    double R_M = Cal_RM(B);
-    double R_N = Cal_RN(B);
-    std::vector<Eigen::Vector2d> NE;
-
-    for (auto blh : BLH) {
-        Eigen::Vector2d ne;
-        ne(0) = (blh(0) - B) * (R_M + h);
-        ne(1) = (blh(1) - L) * (R_N + h) * cos(B);
-        NE.push_back(ne);
-    }
-
-    return NE;
+Eigen::Quaterniond Euler2q(const Eigen::Vector3d& euler) {
+    return C2q(Euler2C(euler));
 }

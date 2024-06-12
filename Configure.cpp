@@ -98,15 +98,18 @@ INS_Configure::INS_Configure()
 
 	gins_options.initstate_std.pos << 1.00000000e+2, 1.00000000e+2, 1.00000000e+2;
 	gins_options.initstate_std.vel << 1.00000000e+0, 1.00000000e+0, 1.00000000e+0;
-	gins_options.initstate_std.euler << 1.00000000e+0, 1.00000000e+0, 1.00000000e+0;
+	gins_options.initstate_std.euler << 5.00000000e-1, 5.00000000e-1, 5.00000000e-1;
 
 	gins_options.initstate.imuerror.gyrbias << 0, 0, 0;
 	gins_options.initstate.imuerror.accbias << 0, 0, 0;
-	gins_options.imunoise.gyrbias_std << 2.00000000e-2, 2.00000000e-2, 2.00000000e-2;
-	gins_options.imunoise.accbias_std << 1.50000000e-2, 1.50000000e-2, 1.50000000e-2;
+	gins_options.initstate_std.imuerror.gyrbias << 8.33300000e-5, 8.33300000e-5, 8.33300000e-5;
+	gins_options.initstate_std.imuerror.accbias << 9.80000000e-4, 9.80000000e-4, 9.80000000e-4;
 
-	gins_options.imunoise.gyr_arw << 0.005, 0.005, 0.005;
-	gins_options.imunoise.acc_vrw << 0.018, 0.018, 0.018;
+	gins_options.imunoise.pos_prw << 1.00000000e-4, 1.00000000e-4, 1.00000000e-4;
+	gins_options.imunoise.acc_vrw << 1.00000000e-3, 1.00000000e-3, 1.00000000e-3;
+	gins_options.imunoise.gyr_arw << 2.75000000e-3, 2.75000000e-3, 2.75000000e-3;
+	gins_options.imunoise.gyrbias_std << 7.71600069e-10, 7.71600069e-10, 7.71600069e-10;
+	gins_options.imunoise.accbias_std << 6.00000000e-8, 6.00000000e-8, 6.00000000e-8;
 	gins_options.imunoise.corr_time = 4;
 
 	gins_options.antlever << -0.0450, 0.0050, 0.8880;
@@ -117,13 +120,12 @@ INS_Configure::INS_Configure()
 	gins_options.initstate.euler *= DEG2RAD;
 	gins_options.initstate_std.euler *= DEG2RAD;
 
-	gins_options.initstate.imuerror.gyrbias *= DEG2RAD / 3600;
-	gins_options.initstate.imuerror.accbias *= 1e-5;
+	gins_options.initstate.imuerror.gyrbias *= DEG2RAD;
+	gins_options.initstate.imuerror.accbias *= 1;
 	gins_options.imunoise.gyrbias_std *= DEG2RAD;
 	gins_options.imunoise.accbias_std *= 1;
 
-	gins_options.imunoise.gyr_arw *= DEG2RAD / 60;
-	gins_options.imunoise.acc_vrw /= 60;
+	gins_options.imunoise.gyr_arw *= DEG2RAD;
 
 	gins_options.imunoise.corr_time *= 3600;
 }
