@@ -159,7 +159,7 @@ int read_GNSS(vector<GNSS*>& Gnss, INS_Configure cfg)
             gnss->time = data[0];
             if(data.size()==7)
             {
-                gnss->blh << deg2rad(data[1]), deg2rad(data[2]), data[3];
+                gnss->pos << deg2rad(data[1]), deg2rad(data[2]), data[3];
                 gnss->std << data[4], data[4], data[5];
                 gnss->vel << 0, 0, 0;
                 gnss->vel_std << 0, 0, 0;
@@ -167,7 +167,7 @@ int read_GNSS(vector<GNSS*>& Gnss, INS_Configure cfg)
             }
             else
             {
-                gnss->blh << data[1], data[2], data[3];
+                gnss->pos << data[1], data[2], data[3];
                 gnss->vel << data[4], data[4], data[5];
                 gnss->std << data[7], data[8], data[9];
                 gnss->vel_std << data[10], data[11], data[12];

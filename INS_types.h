@@ -7,7 +7,7 @@
 typedef struct GNSS {
     double time;
 
-    Eigen::Vector3d blh;
+    Eigen::Vector3d pos;
     Eigen::Vector3d std;
     Eigen::Vector3d vel;
     Eigen::Vector3d vel_std;

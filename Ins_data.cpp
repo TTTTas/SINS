@@ -20,11 +20,11 @@ INS_Eigen::INS_Eigen(GINSOptions& options)
 
     // 初始化系统噪声阵
     auto imunoise = options_.imunoise;
-    Qc.block(P_ID, P_ID, 3, 3) = imunoise.pos_prw.cwiseProduct(imunoise.pos_prw).asDiagonal();
+    Qc.block(P_ID, P_ID, 3, 3) = imunoise.pos_prw.cwiseProduct(0 * imunoise.pos_prw).asDiagonal();
     Qc.block(PHI_ID, PHI_ID, 3, 3) = imunoise.gyr_arw.cwiseProduct(imunoise.gyr_arw).asDiagonal();
     Qc.block(V_ID, V_ID, 3, 3) = imunoise.acc_vrw.cwiseProduct(imunoise.acc_vrw).asDiagonal();
-    Qc.block(BG_ID, BG_ID, 3, 3) = imunoise.gyrbias_std.cwiseProduct(imunoise.gyrbias_std).asDiagonal();
-    Qc.block(BA_ID, BA_ID, 3, 3) = imunoise.accbias_std.cwiseProduct(imunoise.accbias_std).asDiagonal();
+    Qc.block(BG_ID, BG_ID, 3, 3) = imunoise.gyrbias_std.cwiseProduct(0 * imunoise.gyrbias_std).asDiagonal();
+    Qc.block(BA_ID, BA_ID, 3, 3) = imunoise.accbias_std.cwiseProduct(0 * imunoise.accbias_std).asDiagonal();
 
 
     // 设置系统状态(位置、速度、姿态和IMU误差)初值和初始协方差
@@ -229,7 +229,7 @@ void INS_Eigen::gnssUpdate(GNSS& gnssdata)
     Eigen::Vector3d antenna_pos = pvacur_.pos + R_be * options_.antlever;
 
     Eigen::MatrixXd dz;
-    dz = antenna_pos - gnssdata.blh;
+    dz = antenna_pos - gnssdata.pos;
 
     // 构造GNSS位置观测矩阵
     // construct GNSS position measurement matrix

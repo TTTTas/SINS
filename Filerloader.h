@@ -108,14 +108,14 @@ public:
         gnss_.isvalid = true;
         if (data.size() == 7)
         {
-            gnss_.blh << data[1], data[2], data[3];
+            gnss_.pos << data[1], data[2], data[3];
             gnss_.std << data[4], data[4], data[5];
             gnss_.vel << 0, 0, 0;
             gnss_.vel_std << 0, 0, 0;
         }
         else
         {
-            gnss_.blh << data[1], data[2], data[3];
+            gnss_.pos << data[1], data[2], data[3];
             gnss_.vel << data[4], data[4], data[5];
             gnss_.std << data[7], data[8], data[9];
             gnss_.vel_std << data[10], data[11], data[12];
